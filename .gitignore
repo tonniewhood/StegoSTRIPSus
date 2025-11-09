@@ -63,3 +63,6 @@ tmp/
 
 # Tablebases
 tablebases/
+
+# Logs and results
+runs/

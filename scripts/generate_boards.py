@@ -64,7 +64,7 @@ def valid_board(board: chess.Board) -> bool:
     return status == chess.STATUS_VALID
 
 
-def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Color, Dict[chess.PieceType, Image.Image]], fen: str, output_path: str, use_invalid_fen: bool = False) -> None:
+def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Color, Dict[chess.PieceType, Image.Image]], fen: str, use_invalid_fen: bool = False) -> Image.Image:
     """
     Generate a chess board image from a FEN string and save it to the specified output path.
 
@@ -74,17 +74,20 @@ def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Colo
         fen (str): The FEN string representing the chess position.
         output_path (str): The path to save the generated image.
         use_invalid_fen (bool): If True, use an invalid FEN for testing purposes.
+
+    Returns:
+        Image.Image: The generated board state image.
     """
 
     try:
         board = chess.Board(fen)
         if not valid_board(board):
             if not use_invalid_fen:
-                return 1
+                return None
             print("WARNING: Input FEN string is invalid. Proceeding due to request.")
     except ValueError:
         if not use_invalid_fen:
-            return 1
+            return None
         print("WARNING: Input FEN string is invalid. Proceeding due to request.")
 
     # Create a new image for the board
@@ -100,9 +103,8 @@ def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Colo
             y = row * SQUARE_SIZE + (SQUARE_SIZE - piece_img.height) // 2
             board_state_img.paste(piece_img, (x, y), piece_img)
 
-    board_state_img.save(output_path)
-    print(f"Board image saved to {output_path}")
-    return 0
+
+    return board_state_img
 
 
 def single_board_generation(fen: str, output_path: str, use_invalid_fen: bool = False, board_style: str = "green", piece_style: str = "neo") -> int:
@@ -136,7 +138,11 @@ def single_board_generation(fen: str, output_path: str, use_invalid_fen: bool = 
 
     # Generate the board image
     try:
-        generate_board_image(board_image, piece_images, fen, output_path, use_invalid_fen)
+        board_state_img = generate_board_image(board_image, piece_images, fen, use_invalid_fen)
+        if board_state_img is None:
+            return 1
+        board_state_img.save(output_path)
+        print(f"Board image saved to {output_path}")
     except ValueError as e:
         print(e)
         return 2
@@ -175,10 +181,12 @@ def multi_board_generation(fen_list_file: str, output_dir: str, use_invalid_fen:
         idx = 0
         for fen in f:
             output_path = f"{output_dir}/board_{idx+1}.png"
-            result = generate_board_image(board_image, piece_images, fen.strip(), output_path, use_invalid_fen)
-            if result != 0:
+            board_state_img = generate_board_image(board_image, piece_images, fen.strip(), use_invalid_fen)
+            if board_state_img is None:
                 print(f"Failed to generate board for FEN: {fen}")
-                return result + 4  # Combine error codes
+                return 1
+            board_state_img.save(output_path)
+            print(f"Board image saved to {output_path}")
             idx += 1
 
     return 0
