@@ -49,6 +49,8 @@ weights/
 assets/
 asset/
 boardData/
+pieceData/
+datasets/
 
 # Scratch files
 Scratch/
