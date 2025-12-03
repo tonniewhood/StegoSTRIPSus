@@ -1,0 +1,228 @@
+
+;; ================================================================
+;; module: endgame.wff
+;; description: STRIPS wffs for the chess endgame problem
+
+;; ----------------------------------------------------------------
+
+;; Conceptualization:
+
+;; 1) Objects: bk, wk, wp1, wp2, king, queen, rook
+;; 2) Functions: None
+;; 3) Relations: AT, TYPE, COLOR, ADJACENT-FILE, ADJACENT-RANK
+
+;; -----------------------------------------------------------------
+
+;; FOPC formalization of Conceptualization:
+
+;; Constants:
+
+;;   bk - black king
+;;   wk - white king
+;;   wp1 - white piece 1 (e.g., queen, rook)
+;;   wp2 - white piece 2 (e.g., queen, rook)
+
+
+;; --------------------------------------------------------------
+;; FOPC WFF        |  Interpretation
+;; ---------------------------------------------------------------
+;; -- Object type declarations:
+;; (TYPE bk king)             | The black king is of type king.
+;; (COLOR bk black)           | The black king is black.
+;; (TYPE wk king)             | The white king is of type king.
+;; (COLOR wk white)           | The white king is white.
+;; (TYPE wp1 queen OR rook)   | The white piece 1 is of type queen or rook.
+;; (COLOR wp1 white)          | The white piece 1 is white.
+;; (TYPE wp2 queen OR rook)   | The white piece 2 is of type queen or rook.
+;; (COLOR wp2 white)          | The white piece 2 is white.
+;;
+;; -- Spatial indicators:
+;; (AT bk G 8)                | The black king is on space G8.
+;; (AT wk G 6)                | The white king is on space G6.
+;; (AT wp1 F 6)               | The white piece 1 is on space F6.
+;; (AT wp2 F 7)               | The white piece 2 is on space F7.
+;; ================================================================
+
+;; ---------------------------------------------------------------
+;; Notes on the `{{ }}` syntax:
+;;   * The `{{ }}` syntax is used as a placeholder for variable substitution.
+;;   * In this file, `{{ PIECE_TYPE }}`, `{{ FILE }}`, and `{{ RANK }}` will be replaced with specific values during problem instantiation.
+;; ---------------------------------------------------------------
+
+(in-package :user)
+(reset-db)
+
+;; Object type declarations
+(store '(TYPE bk king))
+(store '(TYPE wk king))
+(store '(TYPE wp1 queen))
+(store '(TYPE wp2 NIL))
+
+;; Color declarations
+(store '(COLOR bk black))
+(store '(COLOR wk white))
+(store '(COLOR wp1 white))
+(store '(COLOR wp2 NIL))
+
+;; Spatial indicators
+;; ==========================================
+;; Black king spatial position
+(store '(AT bk B 8))
+(store '(IN-FILE bk B))
+(store '(IN-RANK bk 8))
+
+;; White king spatial position
+(store '(AT wk B 6))
+(store '(IN-FILE wk B))
+(store '(IN-RANK wk 6))
+
+;; White piece 1 spatial position
+(store '(AT wp1 C 6))
+(store '(IN-FILE wp1 C))
+(store '(IN-RANK wp1 6))
+
+;; White piece 2 spatial position
+;; (store '(AT wp2 F 1))
+;; (store '(IN-FILE wp2 F))
+;; (store '(IN-RANK wp2 1))
+
+;; Piece instances
+(store '(INST bk piece))
+(store '(INST wk piece))
+(store '(INST wp1 piece))
+(store '(INST wp2 piece))
+
+;; Space instances (for movement)
+(store '(INST A file))
+(store '(INST B file))
+(store '(INST C file))
+(store '(INST D file))
+(store '(INST E file))
+(store '(INST F file))
+(store '(INST G file))
+(store '(INST H file))
+    
+(store '(INST 1 rank))
+(store '(INST 2 rank))
+(store '(INST 3 rank))
+(store '(INST 4 rank))
+(store '(INST 5 rank))
+(store '(INST 6 rank))
+(store '(INST 7 rank))
+(store '(INST 8 rank))
+
+;; ;; DIFFERENT relations for files (to prevent A->A moves)
+;; (store '(DIFFERENT A B))
+;; (store '(DIFFERENT A C))
+;; (store '(DIFFERENT A D))
+;; (store '(DIFFERENT A E))
+;; (store '(DIFFERENT A F))
+;; (store '(DIFFERENT A G))
+;; (store '(DIFFERENT A H))
+;; (store '(DIFFERENT B A))
+;; (store '(DIFFERENT B C))
+;; (store '(DIFFERENT B D))
+;; (store '(DIFFERENT B E))
+;; (store '(DIFFERENT B F))
+;; (store '(DIFFERENT B G))
+;; (store '(DIFFERENT B H))
+;; (store '(DIFFERENT C A))
+;; (store '(DIFFERENT C B))
+;; (store '(DIFFERENT C D))
+;; (store '(DIFFERENT C E))
+;; (store '(DIFFERENT C F))
+;; (store '(DIFFERENT C G))
+;; (store '(DIFFERENT C H))
+;; (store '(DIFFERENT D A))
+;; (store '(DIFFERENT D B))
+;; (store '(DIFFERENT D C))
+;; (store '(DIFFERENT D E))
+;; (store '(DIFFERENT D F))
+;; (store '(DIFFERENT D G))
+;; (store '(DIFFERENT D H))
+;; (store '(DIFFERENT E A))
+;; (store '(DIFFERENT E B))
+;; (store '(DIFFERENT E C))
+;; (store '(DIFFERENT E D))
+;; (store '(DIFFERENT E F))
+;; (store '(DIFFERENT E G))
+;; (store '(DIFFERENT E H))
+;; (store '(DIFFERENT F A))
+;; (store '(DIFFERENT F B))
+;; (store '(DIFFERENT F C))
+;; (store '(DIFFERENT F D))
+;; (store '(DIFFERENT F E))
+;; (store '(DIFFERENT F G))
+;; (store '(DIFFERENT F H))
+;; (store '(DIFFERENT G A))
+;; (store '(DIFFERENT G B))
+;; (store '(DIFFERENT G C))
+;; (store '(DIFFERENT G D))
+;; (store '(DIFFERENT G E))
+;; (store '(DIFFERENT G F))
+;; (store '(DIFFERENT G H))
+;; (store '(DIFFERENT H A))
+;; (store '(DIFFERENT H B))
+;; (store '(DIFFERENT H C))
+;; (store '(DIFFERENT H D))
+;; (store '(DIFFERENT H E))
+;; (store '(DIFFERENT H F))
+;; (store '(DIFFERENT H G))
+
+;; ;; DIFFERENT relations for ranks (to prevent 1->1 moves)
+;; (store '(DIFFERENT 1 2))
+;; (store '(DIFFERENT 1 3))
+;; (store '(DIFFERENT 1 4))
+;; (store '(DIFFERENT 1 5))
+;; (store '(DIFFERENT 1 6))
+;; (store '(DIFFERENT 1 7))
+;; (store '(DIFFERENT 1 8))
+;; (store '(DIFFERENT 2 1))
+;; (store '(DIFFERENT 2 3))
+;; (store '(DIFFERENT 2 4))
+;; (store '(DIFFERENT 2 5))
+;; (store '(DIFFERENT 2 6))
+;; (store '(DIFFERENT 2 7))
+;; (store '(DIFFERENT 2 8))
+;; (store '(DIFFERENT 3 1))
+;; (store '(DIFFERENT 3 2))
+;; (store '(DIFFERENT 3 4))
+;; (store '(DIFFERENT 3 5))
+;; (store '(DIFFERENT 3 6))
+;; (store '(DIFFERENT 3 7))
+;; (store '(DIFFERENT 3 8))
+;; (store '(DIFFERENT 4 1))
+;; (store '(DIFFERENT 4 2))
+;; (store '(DIFFERENT 4 3))
+;; (store '(DIFFERENT 4 5))
+;; (store '(DIFFERENT 4 6))
+;; (store '(DIFFERENT 4 7))
+;; (store '(DIFFERENT 4 8))
+;; (store '(DIFFERENT 5 1))
+;; (store '(DIFFERENT 5 2))
+;; (store '(DIFFERENT 5 3))
+;; (store '(DIFFERENT 5 4))
+;; (store '(DIFFERENT 5 6))
+;; (store '(DIFFERENT 5 7))
+;; (store '(DIFFERENT 5 8))
+;; (store '(DIFFERENT 6 1))
+;; (store '(DIFFERENT 6 2))
+;; (store '(DIFFERENT 6 3))
+;; (store '(DIFFERENT 6 4))
+;; (store '(DIFFERENT 6 5))
+;; (store '(DIFFERENT 6 7))
+;; (store '(DIFFERENT 6 8))
+;; (store '(DIFFERENT 7 1))
+;; (store '(DIFFERENT 7 2))
+;; (store '(DIFFERENT 7 3))
+;; (store '(DIFFERENT 7 4))
+;; (store '(DIFFERENT 7 5))
+;; (store '(DIFFERENT 7 6))
+;; (store '(DIFFERENT 7 8))
+;; (store '(DIFFERENT 8 1))
+;; (store '(DIFFERENT 8 2))
+;; (store '(DIFFERENT 8 3))
+;; (store '(DIFFERENT 8 4))
+;; (store '(DIFFERENT 8 5))
+;; (store '(DIFFERENT 8 6))
+;; (store '(DIFFERENT 8 7))

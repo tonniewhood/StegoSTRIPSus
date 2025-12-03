@@ -75,7 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("piece_sets", type=str, help="The name of the chess piece sets to download. (Comma-separated for multiple sets)")
     parser.add_argument("board_sets", type=str, help="The name of the chess board sets to download. (Comma-separated for multiple sets)")
     parser.add_argument("save_dir", type=str, help="The directory where the images will be saved.")
-    parser.add_argument("--piece_size", type=int, default=122, help="The size of the chess piece images to download. (Default: 64)")
+    parser.add_argument("--piece-size", type=int, default=122, help="The size of the chess piece images to download. (Default: 64)")
 
     args = parser.parse_args()
     piece_sets = [s.strip() for s in args.piece_sets.split(",")]

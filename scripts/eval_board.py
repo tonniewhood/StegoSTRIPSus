@@ -26,7 +26,15 @@ def main(args: argparse.Namespace) -> None:
     
     if args.board:
         # Load board image
-        board_image = Image.open(args.board).convert("RGB")
+        try:
+            board_image = Image.open(args.board)
+            if board_image.mode == "GIF":
+                board_image = board_image.convert("RGB").convert("RGBA")
+            elif board_image.mode != "RGBA":
+                board_image = board_image.convert("RGBA")
+        except Exception as e:
+            print(f"Failed to open board image '{args.board}': {e}")
+            return
     else:
         background_image = Image.open(BOARD_FILE.format(args.board_style)).convert("RGBA")
         piece_images = {
@@ -44,6 +52,13 @@ def main(args: argparse.Namespace) -> None:
             print("Failed to generate board image from FEN string.")
             return
         
+        if args.fen_board_output:
+            board_image.save(args.fen_board_output)
+            print(f"Generated board image saved to {args.fen_board_output}")
+
+    if args.resize_board:
+        board_image = board_image.resize((1200, 1200), Image.ANTIALIAS)
+        
     row_labels = ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
     predicted_fen, avg_confidence, square_confidences = predictor.predict_board(board_image, return_confidence=True)
     print(f"Predicted FEN: {predicted_fen}")
@@ -52,7 +67,6 @@ def main(args: argparse.Namespace) -> None:
     for rank in range(8, 0, -1):
         row_confidences = []
         for file in range(1, 9):
-            square = chess.square(file - 1, rank - 1)
             confidence = square_confidences.get(f"{row_labels[rank - 1]}{file}", 0.0)
             row_confidences.append(f"{confidence:.2f}")
         print(row_labels[rank - 1], " ", " ".join(row_confidences))
@@ -72,7 +86,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate a YOLO model on a chessboard dataset.")
     parser.add_argument("--model-path", type=str, required=True, help="Path to the YOLO model file.")
     parser.add_argument("--board", "-b", type=str, default="", help="The path to the chess board set to evaluate the state of")
+    parser.add_argument("--resize-board", action="store_true", help="Resize the board image to 1200x1200 for better accuracy.")
     parser.add_argument("--fen-string", "-f", type=str, default="", help="The FEN string representing the expected board state")
+    parser.add_argument("--fen-board-output", "-fo", type=str, default="", help="The output path to save the generated FEN board image")
     parser.add_argument("--piece-style", type=str, default="neo", help="The style of chess pieces used in the board image. (Default: neo)")
     parser.add_argument("--board-style", type=str, default="green", help="The style of chess board used in the board image. (Default: green)")
     parser.add_argument("--confidence-threshold", type=float, default=0.5, help="Confidence threshold for predictions. (Default: 0.5)")

@@ -1,0 +1,206 @@
+
+;; ================================================================
+;; module: endgame.op
+;; description: STRIPS operators for the chess endgame problem
+;; ================================================================
+;;
+
+(in-package :user)
+
+(reset-op-index)
+
+;;; Move queen ?wp horizontal from file ?from-file file ?to-file
+(def-operator MOVE-QUEEN-HORIZONTAL
+  :action (MOVE-QUEEN-HORIZONTAL ?wp ?from-file ?to-file ?rank)
+  :goal   (AT ?wp ?to-file ?rank)
+  :precond ((AT ?wp ?from-file ?rank))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (IN-RANK ?wp ?rank)
+           (INST ?to-file file) (INST ?rank rank))
+  :add ((AT ?wp ?to-file ?rank) (CHECK))
+  :del ((AT ?wp ?from-file ?rank)))
+
+;;; Move queen ?wp vertically from rank ?from-rank rank ?to-rank
+(def-operator MOVE-QUEEN-VERTICAL
+  :action (MOVE-QUEEN-VERTICAL ?wp ?file ?from-rank ?to-rank)
+  :goal   (AT ?wp ?file ?to-rank)    
+  :precond ((AT ?wp ?file ?from-rank))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (IN-FILE ?wp ?file)
+           (INST ?file file) (INST ?to-rank rank))
+  :add ((AT ?wp ?file ?to-rank) (CHECK))
+  :del ((AT ?wp ?file ?from-rank)))
+
+;;; Move queen ?wp diagonally from space ?from-file, ?from-rank to space ?to-file, ?to-rank
+(def-operator MOVE-QUEEN-DIAGONAL
+  :action (MOVE-QUEEN-DIAGONAL ?wp ?from-file ?from-rank ?to-file ?to-rank)
+  :goal   (AT ?wp ?to-file ?to-rank)    
+  :precond ((AT ?wp ?from-file ?from-rank))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white)
+           (INST ?to-file file) (INST ?to-rank rank))
+  :add ((AT ?wp ?to-file ?to-rank) (CHECK))
+  :del ((AT ?wp ?from-file ?from-rank)))
+
+;;; Move rook ?wp vertically from rank ?from-rank rank ?to-rank
+(def-operator MOVE-ROOK-VERTICAL
+  :action (MOVE-ROOK-VERTICAL ?wp ?file ?from-rank ?to-rank)
+  :goal   (AT ?wp ?file ?to-rank)    
+  :precond ((AT ?wp ?file ?from-rank))
+  :filter ((INST ?wp piece) (TYPE ?wp rook) (COLOR ?wp white) (IN-FILE ?wp ?file)
+           (INST ?file file) (INST ?to-rank rank))
+  :add ((AT ?wp ?file ?to-rank) (CHECK))
+  :del ((AT ?wp ?file ?from-rank)))
+
+;;; Move rook ?wp horizontally from file ?from-file file ?to-file
+(def-operator MOVE-ROOK-HORIZONTAL
+  :action (MOVE-ROOK-HORIZONTAL ?wp ?from-file ?to-file ?rank)
+  :goal   (AT ?wp ?to-file ?rank)
+  :precond ((AT ?wp ?from-file ?rank))
+  :filter ((INST ?wp piece) (TYPE ?wp rook) (COLOR ?wp white) (IN-RANK ?wp ?rank)
+          (INST ?to-file file) (INST ?rank rank))
+  :add ((AT ?wp ?to-file ?rank) (CHECK))
+  :del ((AT ?wp ?from-file ?rank)))
+
+(def-operator UNCHECK-BLACK-KING
+  :action (UNCHECK-BLACK-KING ?bk)
+  :goal   (AT ?bk A 8)
+  :precond ((AT ?bk B 8) (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black))
+  :add ((AT ?bk A 8))
+  :del ((CHECK)))
+
+;;; Check for mate condition of type 1
+(def-operator CHECKMATE-TYPE-1
+  :action (CHECKMATE-TYPE-1 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?wk A 6)
+            (AT ?wp1 B 6)
+            (AT ?bk A 8)
+            (AT ?wp2 C 8)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 rook) (COLOR ?wp2 white))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-1-MATE))
+  :del ())
+
+;;; Check for mate condition of type 2
+(def-operator CHECKMATE-TYPE-2
+  :action (CHECKMATE-TYPE-2 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk A 8)
+            (AT ?wk B 6)
+            (AT ?wp1 B 7)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 NIL) (COLOR ?wp2 NIL))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-2-MATE))
+  :del ())
+
+;;; Check for mate condition of type 3
+(def-operator CHECKMATE-TYPE-3
+  :action (CHECKMATE-TYPE-3 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk G 8)
+            (AT ?wk H 6)
+            (AT ?wp1 F 8)
+            (AT ?wp2 F 1)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 rook) (COLOR ?wp2 white))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-3-MATE))
+  :del ())
+
+;;; Check for mate condition of type 4
+(def-operator CHECKMATE-TYPE-4
+  :action (CHECKMATE-TYPE-4 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk H 8)
+            (AT ?wk G 6)
+            (AT ?wp1 F 8)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 NIL) (COLOR ?wp2 NIL))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-4-MATE))
+  :del ())
+
+;;; Check for mate condition of type 5
+(def-operator CHECKMATE-TYPE-5
+  :action (CHECKMATE-TYPE-5 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk A 1)
+            (AT ?wk B 3)
+            (AT ?wp1 C 1)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 NIL) (COLOR ?wp2 NIL))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-5-MATE))
+  :del ())
+
+;;; Check for mate condition of type 6
+(def-operator CHECKMATE-TYPE-6
+  :action (CHECKMATE-TYPE-6 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk H 8)
+            (AT ?wk G 6)
+            (AT ?wp1 E 8)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 NIL) (COLOR ?wp2 NIL))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-6-MATE))
+  :del ())
+
+;;; Check for mate condition of type 7
+(def-operator CHECKMATE-TYPE-7
+  :action (CHECKMATE-TYPE-7 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk A 6)
+            (AT ?wk C 6)
+            (AT ?wp1 B 6)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 NIL) (COLOR ?wp2 NIL))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-7-MATE))
+  :del ())
+
+;;; Check for mate condition of type 8
+(def-operator CHECKMATE-TYPE-8
+  :action (CHECKMATE-TYPE-8 ?bk ?wk ?wp1 ?wp2)
+  :goal   (WINNING-SEQUENCE-FOUND)
+  :precond ((AT ?bk H 6)
+            (AT ?wk F 6)
+            (AT ?wp1 G 6)
+            (CHECK))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
+           (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
+           (INST ?wp2 piece) (TYPE ?wp2 NIL) (COLOR ?wp2 NIL))
+  :add ((WINNING-SEQUENCE-FOUND) (TYPE-8-MATE))
+  :del ())
+
+;;; a formalization of chess endgame completion
+;;; in terms of preconditions of a STRIPS
+;;; operator.
+(def-operator DONE
+  :action (DONE)
+  :goal   (CHECKMATE)
+  :precond ((WINNING-SEQUENCE-FOUND) (CHECK))
+  :add ((CHECKMATE))
+  :del ((CHECK)))
+
+
+
+
+  
+
