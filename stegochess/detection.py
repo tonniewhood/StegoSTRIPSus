@@ -1,16 +1,18 @@
+"""
+detection.py - YOLO-based chess piece detection
+"""
 
-import argparse
 import os
+from pathlib import Path
+from typing import Dict, Tuple
 
 import chess
 from PIL import Image
+from ultralytics import YOLO
+
 from stegochess.ChessPredictor import ChessPiecePredictor
-from generate_boards import BOARD_FILE, PIECE_IMAGES, SPRITE_DIR, generate_board_image
 
-
-def main(args: argparse.Namespace) -> None:
-    """Evaluate a YOLO model on a chessboard dataset."""
-
+def evalute(args):
     # Quick checks for file existence
     if not args.board and not args.fen_string:
         print("Either --board (-b) or --fen-string (-f) must be provided.")
@@ -81,19 +83,35 @@ def main(args: argparse.Namespace) -> None:
         is_correct = board.board_fen() == expected_board.board_fen()
         print(f"Prediction Correct: {is_correct}")
 
+def detect_from_image(image: Image.Image, model_path: Path, device: int = 0, confidence_threshold: float = 0.5) -> Tuple[str, str | float, str | Dict[str, float]]:
+    """
+    Run YOLO detection on a chess board image
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate a YOLO model on a chessboard dataset.")
-    parser.add_argument("--model-path", type=str, required=True, help="Path to the YOLO model file.")
-    parser.add_argument("--board", "-b", type=str, default="", help="The path to the chess board set to evaluate the state of")
-    parser.add_argument("--resize-board", action="store_true", help="Resize the board image to 1200x1200 for better accuracy.")
-    parser.add_argument("--fen-string", "-f", type=str, default="", help="The FEN string representing the expected board state")
-    parser.add_argument("--fen-board-output", "-fo", type=str, default="", help="The output path to save the generated FEN board image")
-    parser.add_argument("--piece-style", type=str, default="neo", help="The style of chess pieces used in the board image. (Default: neo)")
-    parser.add_argument("--board-style", type=str, default="green", help="The style of chess board used in the board image. (Default: green)")
-    parser.add_argument("--confidence-threshold", type=float, default=0.5, help="Confidence threshold for predictions. (Default: 0.5)")
-    parser.add_argument("--device", type=int, default=0, help="Device ID for evaluation. (Default: 0)")
+    Args:
+        image (Image.Image): PIL Image of the chess board
+        model_path (Path): Path to the YOLO model
+        device (int): Device index for YOLO model (e.g., 0 for GPU, -1 for CPU)
+        confidence_threshold (float): Minimum confidence for predictions (0-1)
 
-    args = parser.parse_args()
-    main(args)
+    Returns:
+        Tuple[str, str | float, str | Dict[str, float]]: the predicted FEN string, average confidence, and per-square confidences
+    """
+    
+    print("[DETECTION] Processing image for detection")
+    predictor = ChessPiecePredictor(model_path=model_path, device=device, confidence_threshold=confidence_threshold)
+    return predictor.predict_board(image, return_confidence=True)
 
+
+def detection_to_fen(detection_results):
+    """
+    Convert YOLO detection results to FEN string
+
+    Args:
+        detection_results: Dict of detected pieces and positions
+
+    Returns:
+        str: FEN string representation
+    """
+    print("[DETECTION] Converting detection to FEN")
+    # TODO: Implement conversion
+    return ""
