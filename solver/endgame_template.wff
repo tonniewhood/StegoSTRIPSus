@@ -67,23 +67,23 @@
 ;; Spatial indicators
 ;; ==========================================
 ;; Black king spatial position
-(store '(AT bk B 8))
-(store '(IN-FILE bk B))
+(store '(AT bk H 8))
+(store '(IN-FILE bk H))
 (store '(IN-RANK bk 8))
 
 ;; White king spatial position
-(store '(AT wk B 6))
-(store '(IN-FILE wk B))
+(store '(AT wk G 6))
+(store '(IN-FILE wk G))
 (store '(IN-RANK wk 6))
 
 ;; White piece 1 spatial position
-(store '(AT wp1 C 6))
-(store '(IN-FILE wp1 C))
+(store '(AT wp1 E 6))
+(store '(IN-FILE wp1 E))
 (store '(IN-RANK wp1 6))
 
 ;; White piece 2 spatial position
-;; (store '(AT wp2 F 1))
-;; (store '(IN-FILE wp2 F))
+;; (store '(AT wp2 C 1))
+;; (store '(IN-FILE wp2 C))
 ;; (store '(IN-RANK wp2 1))
 
 ;; Piece instances

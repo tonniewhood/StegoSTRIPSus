@@ -8,4 +8,4 @@ The current winning configurations (FEN string) are as follows
 5. Starting: "8/2R5/8/8/8/1K6/8/k7 w - - 0 1"   -> Move: RC7 to C1 -> Final: "8/8/8/8/8/1K6/8/k1R5 w - - 0 1"                       (JMP)
 6. Starting: "7k/8/4Q1K1/8/8/8/8/8 w - - 0 1"   -> Move: QE6 to E8 -> Final: "4Q2k/8/6K1/8/8/8/8/8 w - - 0 1"                       (JZ)
 7. Starting: "3Q4/8/k1K5/8/8/8/8/8 w - - 0 1"   -> Move: QD8 to B6 -> Final: "8/8/kQK5/8/8/8/8/8 w - - 0 1"                         (LOAD)
-8. Starting: "4Q3/8/5K1k/8/8/8/8/8 w - - 0 1"   -> Move: QE8 to G6 -> Final: "8/8/5KQk/8/8/8/8/8 w - - 0 1"                         (HALT)
+8. Starting: "4Q3/8/5K1k/8/8/8/8/8 w - - 0 1"   -> Move: QE8 to G6 -> Final: "7Q/8/5K1k/8/8/8/8/8 w - - 0 1"                        (HALT)

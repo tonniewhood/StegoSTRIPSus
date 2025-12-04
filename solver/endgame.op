@@ -9,63 +9,148 @@
 
 (reset-op-index)
 
-;;; Move queen ?wp horizontal from file ?from-file file ?to-file
-(def-operator MOVE-QUEEN-HORIZONTAL
-  :action (MOVE-QUEEN-HORIZONTAL ?wp ?from-file ?to-file ?rank)
-  :goal   (AT ?wp ?to-file ?rank)
-  :precond ((AT ?wp ?from-file ?rank))
-  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (IN-RANK ?wp ?rank)
-           (INST ?to-file file) (INST ?rank rank))
-  :add ((AT ?wp ?to-file ?rank) (CHECK))
-  :del ((AT ?wp ?from-file ?rank)))
+;;; Move queen ?wp along a left diagonal from space ?from-file, ?from-rank to space ?to-file, ?to-rank
+(def-operator MOVE-QUEEN-DIAGONAL
+  :action (MOVE-QUEEN-DIAGONAL ?wp ?from-file ?from-rank ?to-file ?to-rank ?l-diag ?from-r-diag ?to-r-diag)
+  :goal   (AT ?wp ?to-file ?to-rank)    
+  :precond ((AT ?wp ?from-file ?from-rank))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (L-DIAG ?wp ?l-diag) (R-DIAG ?wp ?from-r-diag)
+           (INST ?from-file file) (INST ?to-file file) (INST ?from-rank rank) (INST ?to-rank rank)
+           (INST ?l-diag l-diagonal) (INST ?from-r-diag r-diagonal) (INST ?to-r-diag r-diagonal)
+           (ON-L-DIAGONAL ?from-file ?from-rank ?l-diag) (ON-L-DIAGONAL ?to-file ?to-rank ?l-diag) (ON-R-DIAGONAL ?from-file ?from-rank ?from-r-diag) (ON-R-DIAGONAL ?to-file ?to-rank ?to-r-diag))
+  :add ((AT ?wp ?to-file ?to-rank) (R-DIAG ?wp ?to-r-diag) (CHECK))
+  :del ((AT ?wp ?from-file ?from-rank) (R-DIAG ?wp ?from-r-diag)))
+
+;;; Move queen ?wp along a right diagonal from space ?from-file, ?from-rank to space ?to-file, ?to-rank
+(def-operator MOVE-QUEEN-DIAGONAL
+  :action (MOVE-QUEEN-DIAGONAL ?wp ?from-file ?from-rank ?to-file ?to-rank ?r-diag ?from-l-diag ?to-l-diag)
+  :goal   (AT ?wp ?to-file ?to-rank)    
+  :precond ((AT ?wp ?from-file ?from-rank))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (R-DIAG ?wp ?r-diag) (L-DIAG ?wp ?from-l-diag)
+           (INST ?from-file file) (INST ?to-file file) (INST ?from-rank rank) (INST ?to-rank rank)
+           (INST ?r-diag r-diagonal) (INST ?from-l-diag l-diagonal) (INST ?to-l-diag l-diagonal)
+           (ON-L-DIAGONAL ?from-file ?from-rank ?from-l-diag) (ON-L-DIAGONAL ?to-file ?to-rank ?to-l-diag) (ON-R-DIAGONAL ?from-file ?from-rank ?r-diag) (ON-R-DIAGONAL ?to-file ?to-rank ?r-diag))
+  :add ((AT ?wp ?to-file ?to-rank) (L-DIAG ?wp ?to-l-diag) (CHECK))
+  :del ((AT ?wp ?from-file ?from-rank) (L-DIAG ?wp ?from-l-diag)))
 
 ;;; Move queen ?wp vertically from rank ?from-rank rank ?to-rank
 (def-operator MOVE-QUEEN-VERTICAL
-  :action (MOVE-QUEEN-VERTICAL ?wp ?file ?from-rank ?to-rank)
+  :action (MOVE-QUEEN-VERTICAL ?wp ?file ?from-rank ?to-rank ?from-l-diag ?to-l-diag ?from-r-diag ?to-r-diag)
   :goal   (AT ?wp ?file ?to-rank)    
-  :precond ((AT ?wp ?file ?from-rank))
-  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (IN-FILE ?wp ?file)
-           (INST ?file file) (INST ?to-rank rank))
-  :add ((AT ?wp ?file ?to-rank) (CHECK))
-  :del ((AT ?wp ?file ?from-rank)))
+  :precond ((AT ?wp ?file ?from-rank) (L-DIAG ?wp ?from-l-diag) (R-DIAG ?wp ?from-r-diag))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (IN-RANK ?wp ?from-rank) (IN-FILE ?wp ?file) (L-DIAG ?wp ?from-l-diag) (R-DIAG ?wp ?from-r-diag)
+           (INST ?file file) (INST ?from-rank rank) (INST ?to-rank rank)
+           (INST ?from-l-diag l-diagonal) (INST ?to-l-diag l-diagonal) (INST ?from-r-diag r-diagonal) (INST ?to-r-diag r-diagonal)
+           (ON-L-DIAGONAL ?file ?to-rank ?to-l-diag) (ON-R-DIAGONAL ?file ?to-rank ?to-r-diag))
+  :add ((AT ?wp ?file ?to-rank) (IN-RANK ?wp ?to-rank) (L-DIAG ?wp ?to-l-diag) (R-DIAG ?wp ?to-r-diag) (CHECK))
+  :del ((AT ?wp ?file ?from-rank) (IN-RANK ?wp ?from-rank) (L-DIAG ?wp ?from-l-diag) (R-DIAG ?wp ?from-r-diag)))
 
-;;; Move queen ?wp diagonally from space ?from-file, ?from-rank to space ?to-file, ?to-rank
-(def-operator MOVE-QUEEN-DIAGONAL
-  :action (MOVE-QUEEN-DIAGONAL ?wp ?from-file ?from-rank ?to-file ?to-rank)
-  :goal   (AT ?wp ?to-file ?to-rank)    
-  :precond ((AT ?wp ?from-file ?from-rank))
-  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white)
-           (INST ?to-file file) (INST ?to-rank rank))
-  :add ((AT ?wp ?to-file ?to-rank) (CHECK))
-  :del ((AT ?wp ?from-file ?from-rank)))
+;;; Move queen ?wp horizontal from file ?from-file file ?to-file
+(def-operator MOVE-QUEEN-HORIZONTAL
+  :action (MOVE-QUEEN-HORIZONTAL ?wp ?from-file ?to-file ?rank ?from-l-diag ?to-l-diag ?from-r-diag ?to-r-diag)
+  :goal   (AT ?wp ?to-file ?rank)
+  :precond ((AT ?wp ?from-file ?rank) (L-DIAG ?wp ?from-l-diag) (R-DIAG ?wp ?from-r-diag))
+  :filter ((INST ?wp piece) (TYPE ?wp queen) (COLOR ?wp white) (IN-FILE ?wp ?from-file) (IN-RANK ?wp ?rank) (L-DIAG ?wp ?from-l-diag) (R-DIAG ?wp ?from-r-diag)
+           (INST ?from-file file) (INST ?to-file file) (INST ?rank rank)
+           (INST ?from-l-diag l-diagonal) (INST ?to-l-diag l-diagonal) (INST ?from-r-diag r-diagonal) (INST ?to-r-diag r-diagonal)
+           (ON-L-DIAGONAL ?to-file ?rank ?to-l-diag) (ON-R-DIAGONAL ?to-file ?rank ?to-r-diag))
+  :add ((AT ?wp ?to-file ?rank) (L-DIAG ?wp ?to-l-diag) (R-DIAG ?wp ?to-r-diag) (CHECK))
+  :del ((AT ?wp ?from-file ?rank) (L-DIAG ?wp ?from-l-diag) (R-DIAG ?wp ?from-r-diag)))
+
 
 ;;; Move rook ?wp vertically from rank ?from-rank rank ?to-rank
 (def-operator MOVE-ROOK-VERTICAL
   :action (MOVE-ROOK-VERTICAL ?wp ?file ?from-rank ?to-rank)
   :goal   (AT ?wp ?file ?to-rank)    
   :precond ((AT ?wp ?file ?from-rank))
-  :filter ((INST ?wp piece) (TYPE ?wp rook) (COLOR ?wp white) (IN-FILE ?wp ?file)
-           (INST ?file file) (INST ?to-rank rank))
-  :add ((AT ?wp ?file ?to-rank) (CHECK))
-  :del ((AT ?wp ?file ?from-rank)))
+  :filter ((INST ?wp piece) (TYPE ?wp rook) (COLOR ?wp white) (IN-RANK ?wp ?from-rank) (IN-FILE ?wp ?file)
+           (INST ?file file) (INST ?from-rank rank) (INST ?to-rank rank))
+  :add ((AT ?wp ?file ?to-rank) (IN-RANK ?wp ?to-rank) (CHECK))
+  :del ((AT ?wp ?file ?from-rank) (IN-RANK ?wp ?from-rank)))
 
 ;;; Move rook ?wp horizontally from file ?from-file file ?to-file
 (def-operator MOVE-ROOK-HORIZONTAL
   :action (MOVE-ROOK-HORIZONTAL ?wp ?from-file ?to-file ?rank)
   :goal   (AT ?wp ?to-file ?rank)
-  :precond ((AT ?wp ?from-file ?rank))
-  :filter ((INST ?wp piece) (TYPE ?wp rook) (COLOR ?wp white) (IN-RANK ?wp ?rank)
-          (INST ?to-file file) (INST ?rank rank))
+  :precond ((AT ?wp ?from-file ?rank) )
+  :filter ((INST ?wp piece) (TYPE ?wp rook) (COLOR ?wp white) (IN-FILE ?wp ?from-file) (IN-RANK ?wp ?rank) 
+           (INST ?from-file file) (INST ?to-file file) (INST ?rank rank))
   :add ((AT ?wp ?to-file ?rank) (CHECK))
   :del ((AT ?wp ?from-file ?rank)))
+
+;;; Check black king in left diagonal line of queen ?wp at file ?file and rank ?rank
+(def-operator CHECK-BLACK-KING
+    :action (CHECK-BLACK-KING ?bk ?wq ?file ?rank ?l-diag)
+    :goal   (CHECK-FROM ?wq ?file ?rank ?l-diag)
+    :precond ((AT ?wq ?file ?rank) (L-DIAG ?bk ?l-diag) (L-DIAG ?wq ?l-diag))
+    :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+             (INST ?wq piece) (TYPE ?wq queen) (COLOR ?wq white)
+            (INST ?file file) (INST ?rank rank) (INST ?l-diag l-diagonal))
+    :add ((CHECK) (CHECK-FROM ?wq ?file ?rank ?l-diag))
+    :del ())
+
+;;; Check black king in right diagonal line of queen ?wp at file ?file and rank ?rank
+(def-operator CHECK-BLACK-KING
+    :action (CHECK-BLACK-KING ?bk ?wq ?file ?rank ?r-diag)
+    :goal   (CHECK-FROM ?wq ?file ?rank ?r-diag)
+    :precond ((R-DIAG ?bk ?r-diag))
+    :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+            (INST ?wq piece) (TYPE ?wq queen) (COLOR ?wq white) (R-DIAG ?wq ?r-diag) (AT ?wq ?file ?rank)
+            (INST ?file file) (INST ?rank rank) (INST ?r-diag diagonal))
+    :add ((CHECK) (CHECK-FROM ?wq ?file ?rank ?r-diag))
+    :del ())
+
+;;; Check black king in horizontal line of queen ?wp at rank ?rank
+(def-operator CHECK-BLACK-KING
+    :action (CHECK-BLACK-KING ?bk ?wq ?file ?rank)
+    :goal   (CHECK-FROM ?wq ?file ?rank)
+    :precond ((IN-RANK ?bk ?rank))
+    :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+            (INST ?wq piece) (TYPE ?wq queen) (COLOR ?wq white) (AT ?wq ?file ?rank)
+            (INST ?file file) (INST ?rank rank))
+    :add ((CHECK) (CHECK-FROM ?wq ?file ?rank))
+    :del ())
+
+;;; Check black king in vertical line of queen ?wp at file ?file
+(def-operator CHECK-BLACK-KING
+    :action (CHECK-BLACK-KING ?bk ?wq ?file ?rank)
+    :goal   (CHECK-FROM ?wq ?file ?rank)
+    :precond ((IN-FILE ?bk ?file))
+    :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+            (INST ?wq piece) (TYPE ?wq queen) (COLOR ?wq white) (AT ?wq ?file ?rank)
+            (INST ?file file) (INST ?rank rank))
+    :add ((CHECK) (CHECK-FROM ?wq ?file ?rank))
+    :del ())
+
+;;; Check black king in horizontal line of rook ?wp at rank ?rank
+(def-operator CHECK-BLACK-KING
+  :action (CHECK-BLACK-KING ?bk ?wr ?file ?rank)
+  :goal   (CHECK-FROM ?wr ?file ?rank)
+  :precond ((IN-RANK ?bk ?rank))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wr piece) (TYPE ?wr rook) (COLOR ?wr white) (AT ?wr ?file ?rank)
+           (INST ?file file) (INST ?rank rank))
+  :add ((CHECK) (CHECK-FROM ?wr ?file ?rank))
+  :del ())
+
+;;; Check black king in vertical line of rook ?wp at file ?file
+(def-operator CHECK-BLACK-KING
+  :action (CHECK-BLACK-KING ?bk ?wr ?file ?rank)
+  :goal   (CHECK-FROM ?wr ?file ?rank)
+  :precond ((IN-FILE ?bk ?file))
+  :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
+           (INST ?wr piece) (TYPE ?wr rook) (COLOR ?wr white) (AT ?wr ?file ?rank)
+           (INST ?file file) (INST ?rank rank))
+  :add ((CHECK) (CHECK-FROM ?wr ?file ?rank))
+  :del ())
 
 (def-operator UNCHECK-BLACK-KING
   :action (UNCHECK-BLACK-KING ?bk)
   :goal   (AT ?bk A 8)
   :precond ((AT ?bk B 8) (CHECK))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black))
-  :add ((AT ?bk A 8))
-  :del ((CHECK)))
+  :add ((AT ?bk A 8) (L-DIAG ?bk LD8) (R-DIAG ?bk RD15))
+  :del ((AT ?bk B 8) (L-DIAG ?bk LD9) (R-DIAG ?bk RD14) (CHECK)))
 
 ;;; Check for mate condition of type 1
 (def-operator CHECKMATE-TYPE-1
@@ -73,8 +158,10 @@
   :goal   (WINNING-SEQUENCE-FOUND)
   :precond ((AT ?wk A 6)
             (AT ?wp1 B 6)
+            (CHECK-FROM ?wp1 B 6)
             (AT ?bk A 8)
             (AT ?wp2 C 8)
+            (CHECK-FROM ?wp2 C 8)
             (CHECK))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
@@ -87,10 +174,11 @@
 (def-operator CHECKMATE-TYPE-2
   :action (CHECKMATE-TYPE-2 ?bk ?wk ?wp1 ?wp2)
   :goal   (WINNING-SEQUENCE-FOUND)
-  :precond ((AT ?bk A 8)
-            (AT ?wk B 6)
+  :precond ((AT ?wk B 6)
+            (CHECK-FROM ?wp1 C 7 LD9)
+            (AT ?bk A 8)
             (AT ?wp1 B 7)
-            (CHECK))
+            (CHECK-FROM ?wp1 B 7 LD8))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
@@ -106,7 +194,8 @@
             (AT ?wk H 6)
             (AT ?wp1 F 8)
             (AT ?wp2 F 1)
-            (CHECK))
+            (CHECK)
+            (CHECK-FROM ?wp1 F 8))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
@@ -121,7 +210,8 @@
   :precond ((AT ?bk H 8)
             (AT ?wk G 6)
             (AT ?wp1 F 8)
-            (CHECK))
+            (CHECK)
+            (CHECK-FROM ?wp1 F 8))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
@@ -136,7 +226,8 @@
   :precond ((AT ?bk A 1)
             (AT ?wk B 3)
             (AT ?wp1 C 1)
-            (CHECK))
+            (CHECK)
+            (CHECK-FROM ?wp1 C 1))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 rook) (COLOR ?wp1 white)
@@ -151,7 +242,8 @@
   :precond ((AT ?bk H 8)
             (AT ?wk G 6)
             (AT ?wp1 E 8)
-            (CHECK))
+            (CHECK)
+            (CHECK-FROM ?wp1 E 8))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
@@ -166,7 +258,8 @@
   :precond ((AT ?bk A 6)
             (AT ?wk C 6)
             (AT ?wp1 B 6)
-            (CHECK))
+            (CHECK)
+            (CHECK-FROM ?wp1 B 6))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
@@ -180,8 +273,9 @@
   :goal   (WINNING-SEQUENCE-FOUND)
   :precond ((AT ?bk H 6)
             (AT ?wk F 6)
-            (AT ?wp1 G 6)
-            (CHECK))
+            (AT ?wp1 H 8)
+            (CHECK)
+            (CHECK-FROM ?wp1 H 8))
   :filter ((INST ?bk piece) (TYPE ?bk king) (COLOR ?bk black)
            (INST ?wk piece) (TYPE ?wk king) (COLOR ?wk white)
            (INST ?wp1 piece) (TYPE ?wp1 queen) (COLOR ?wp1 white)
@@ -198,9 +292,3 @@
   :precond ((WINNING-SEQUENCE-FOUND) (CHECK))
   :add ((CHECKMATE))
   :del ((CHECK)))
-
-
-
-
-  
-
