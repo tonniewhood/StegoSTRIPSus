@@ -6,7 +6,7 @@ import os
 import random
 import requests
 import shutil
-from typing import Dict
+from typing import Dict, Tuple
 
 import chess
 from PIL import Image
@@ -14,12 +14,13 @@ from PIL import Image
 CHESS_THEME_URL = "https://www.chess.com/chess-themes/"
 PIECE_BASE_URL = CHESS_THEME_URL + "pieces/{}/{}/{}{}.png"
 BOARD_BASE_URL = "https://images.chesscomfiles.com/chess-themes/boards/{}/150.png"
-ASSET_PATH = "/home/tonniewhood/School/Fall_2025/CS_5600/Final_Project/assets/"
-DATA_DIR = "/home/tonniewhood/School/Fall_2025/CS_5600/Final_Project/datasets/chess_pieces/"
+ASSET_PATH = "assets/"
+DATA_DIR = "datasets/chess_pieces/"
 TRAIN_DIR = DATA_DIR + "train/"
 VAL_DIR = DATA_DIR + "val/"
-BOARD_FILE = ASSET_PATH + "boards/{}.png"
 SPRITE_DIR = ASSET_PATH + "sprites/"
+BOARD_DIR = ASSET_PATH + "boards/"
+BOARD_FILE = BOARD_DIR + "{}.png"
 PIECE_IMAGES = {
     chess.WHITE: {
         chess.PAWN: "white/{}/pawn.png",
@@ -86,11 +87,11 @@ def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Colo
         if not valid_board(board):
             if not use_invalid_fen:
                 return None
-            print("WARNING: Input FEN string is invalid. Proceeding due to request.")
+            print("[WARNING] Input FEN string is invalid. Proceeding due to request.")
     except ValueError:
         if not use_invalid_fen:
             return None
-        print("WARNING: Input FEN string is invalid. Proceeding due to request.")
+        print("[WARNING] Input FEN string is invalid. Proceeding due to request.")
 
     # Create a new image for the board
     board_state_img = board_image.copy()
@@ -144,7 +145,7 @@ def single_board_generation(fen: str, output_path: str, use_invalid_fen: bool = 
         if board_state_img is None:
             return 1
         board_state_img.save(output_path)
-        print(f"Board image saved to {output_path}")
+        print(f"[GENERATE] Board image saved to {output_path}")
     except ValueError as e:
         print(e)
         return 2
@@ -296,8 +297,8 @@ def training_data_generation(sprite_dir: str, board_dir: str) -> int:
             print(f"Saved empty dark square image: {dark_square_path}")
 
         for style in sprite_styles:
-            save_pieces_with_background(DATA_DIR, style, light, board_style, is_light_square=True)
-            save_pieces_with_background(DATA_DIR, style, dark, board_style, is_light_square=False)
+            save_pieces_with_background(style, light, board_style, is_light_square=True)
+            save_pieces_with_background(style, dark, board_style, is_light_square=False)
 
     for piece in os.listdir(TRAIN_DIR):
         images = os.listdir(os.path.join(TRAIN_DIR, piece))
@@ -312,98 +313,111 @@ def training_data_generation(sprite_dir: str, board_dir: str) -> int:
             os.rename(src_path, dest_path)
             print(f"Moved {os.path.basename(src_path)} to validation set")
 
-def get_pieces(set_name: str, save_dir: str, piece_size: int) -> None:
+def get_pieces(set_name: str, quiet: bool = False) -> bool:
     """
     Download chess piece images from Chess.com and save them to the specified directory.
 
     Args:
         set_name (str): The name of the chess piece set to download.
-        save_dir (str): The directory where the images will be saved.
-        piece_size (int): The size of the chess piece images to download. (Will be square)
+        quiet (bool): If True, suppress output messages.
+    
+    Return:
+        bool: True if download was successful, False otherwise.
     """
 
-    if not os.path.exists(save_dir):
-        option = input(f"Directory '{save_dir}' does not exist. Create it? [y/n]: ")
-        if option.lower().startswith('y'):
-            os.makedirs(save_dir)
-        else:
-            print("Aborting download.")
-            return
+    if not os.path.exists(SPRITE_DIR):
+        if not quiet:
+            print("[WARNING] Sprite asset directory does not exist. The project may not be setup correctly. Ensure you've run `setup.sh`. Creating directory now.")
+        os.makedirs(SPRITE_DIR)
         
     colors = ['white', 'black']
     pieces = {'king': 'k', 'queen': 'q', 'rook': 'r', 'bishop': 'b', 'knight': 'n', 'pawn': 'p'}
 
     for color in colors:
         for piece in pieces:
-            piece_url = PIECE_BASE_URL.format(set_name, piece_size, color[0].lower(), pieces[piece])
+            piece_url = PIECE_BASE_URL.format(set_name, SQUARE_SIZE, color[0].lower(), pieces[piece])
             response = requests.get(piece_url)
             if response.status_code == 200:
-                file_dir = os.path.join(save_dir, color, set_name)
+                file_dir = os.path.join(SPRITE_DIR, color, set_name)
                 os.makedirs(file_dir, exist_ok=True)
                 file_path = os.path.join(file_dir, f"{piece}.png")
                 with open(file_path, 'wb') as f:
                     f.write(response.content)
-                print(f"Downloaded {file_path}")
+                if not quiet:
+                    print(f"[FETCH] Downloaded {file_path}")
             else:
-                print(f"Failed to download {piece_url}: Status code {response.status_code}")
+                print(f"[ERROR] Failed to download {piece_url}: Status code {response.status_code}")
+                return False
+            
+    return True
 
-def get_boards(set_name: str, save_dir: str) -> None:
+def get_boards(set_name: str, quiet: bool = False) -> bool:
     """
     Download chess board images from Chess.com and save them to the specified directory.
 
     Args:
         set_name (str): The name of the chess board set to download.
-        save_dir (str): The directory where the images will be saved.
+        quiet (bool): If True, suppress output messages.
+
+    Returns:
+        bool: True if download was successful, False otherwise.
     """
 
-    if not os.path.exists(save_dir):
-        option = input(f"Directory '{save_dir}' does not exist. Create it? [y/n]: ")
-        if option.lower().startswith('y'):
-            os.makedirs(save_dir)
-        else:
-            print("Aborting download.")
-            return
+    if not os.path.exists(BOARD_DIR):
+        print("[WARNING] Board asset directory does not exist. The project may not be setup correctly. Ensure you've run `setup.sh`. Creating directory now.")
+        os.makedirs(BOARD_DIR)
 
     board_url = BOARD_BASE_URL.format(set_name)
     response = requests.get(board_url)
     if response.status_code == 200:
-        file_path = os.path.join(save_dir, f"{set_name}.png")
+        file_path = os.path.join(BOARD_DIR, f"{set_name}.png")
         with open(file_path, 'wb') as f:
             f.write(response.content)
-        print(f"Downloaded {file_path}")
+        if not quiet:
+            print(f"[FETCH] Downloaded {file_path}")
     else:
-        print(f"Failed to download {board_url}: Status code {response.status_code}")
+        print(f"[ERROR] Failed to download {board_url}: Status code {response.status_code}")
+        return False
+    
+    return True
 
-def fen_to_board(fen_string):
+def list_available_piece_styles() -> Tuple[str, ...]:
     """
-    Parse FEN string to board representation
-
-    Args:
-        fen_string: FEN string
+    List available chess piece sets under the local assets directory.
 
     Returns:
-        dict: Board representation with piece positions
+        Tuple[str, ...]: A tuple of available piece set names.
     """
-    print(f"[BOARD] Parsing FEN: {fen_string}")
-    # TODO: Parse FEN string
-    return {}
 
+    if not os.path.exists(SPRITE_DIR):
+        print("[WARNING] Sprite asset directory does not exist. The project may not be setup correctly. Ensure you've run `setup.sh`.")
+        return ()
+    
+    piece_sets = set()
+    for files in os.listdir(os.path.join(SPRITE_DIR, "black")):
+        set_name, _ = os.path.splitext(files)
+        piece_sets.add(set_name)
+    
+    return tuple(piece_sets)
 
-def generate_board_image(fen_string, output_path=None):
+def list_available_board_styles() -> Tuple[str, ...]:
     """
-    Generate a visual representation of the board from FEN
-
-    Args:
-        fen_string: FEN string
-        output_path: Optional path to save the image
+    List available chess board styles under the local assets directory.
 
     Returns:
-        str: Path to generated image or display inline
+        Tuple[str, ...]: A tuple of available board style names.
     """
-    print(f"[BOARD] Generating board visualization")
-    # TODO: Generate board image (using python-chess, PIL, etc.)
-    pass
 
+    if not os.path.exists(BOARD_DIR):
+        print("[WARNING] Board asset directory does not exist. The project may not be setup correctly. Ensure you've run `setup.sh`.")
+        return ()
+    
+    board_styles = []
+    for board_file in os.listdir(BOARD_DIR):
+        style_name, _ = os.path.splitext(board_file)
+        board_styles.append(style_name)
+    
+    return tuple(board_styles)
 
 def print_board_ascii(fen_string):
     """
@@ -412,18 +426,68 @@ def print_board_ascii(fen_string):
     Args:
         fen_string: FEN string
     """
+
     print(f"[BOARD] ASCII representation of: {fen_string}")
-    # TODO: Print ASCII board
-    print("  a b c d e f g h")
-    print("8 . . . . . . . k 8")
-    print("7 . . . . . . . . 7")
-    print("6 . . . . Q . K . 6")
-    print("5 . . . . . . . . 5")
-    print("4 . . . . . . . . 4")
-    print("3 . . . . . . . . 3")
-    print("2 . . . . . . . . 2")
-    print("1 . . . . . . . . 1")
-    print("  a b c d e f g h")
+    ranks = fen_string.split(' ')[0].split('/')
+    ascii_board = "\n\t  a b c d e f g h\n"
+    for idx, rank in enumerate(ranks):
+        ascii_board += f"\t{8 - idx} "
+        for char in rank:
+            if char.isdigit():
+                ascii_board += '. ' * int(char)
+            else:
+                ascii_board += char + ' '
+        ascii_board += "\n"
+    print(ascii_board)
+
+def generate_board(fen_string: str) -> None:
+    """Generate board visualization from FEN string"""
+
+    print(f"[GENERATE] Generating board from FEN: {fen_string}")
+    response = input("[GENERATE] View board ASCII? (y/n): ").strip().lower()
+    if response == 'y':
+        print_board_ascii(fen_string)
+
+    board_style = input("[GENERATE] Enter board style (default 'green'): ").strip()
+    if not board_style:
+        board_style = 'green'
+
+    available_boards = list_available_board_styles()
+    if board_style not in available_boards:
+        fetch_choice = input(f"[GENERATE] Board style '{board_style}' not found locally. Fetch from online [Chess.com]? (y/n): ").strip().lower()
+        if fetch_choice == 'y':
+            success = get_boards(board_style)
+            if not success:
+                print(f"[GENERATE] Failed to fetch board style '{board_style}'. Using default 'green'.")
+                board_style = 'green'
+                if board_style not in available_boards:
+                    get_boards(board_style, quiet=True)
+        else:
+            print(f"[GENERATE] Using default board style 'green'.")
+            board_style = 'green'
+    
+    piece_style = input("[GENERATE] Enter piece style (default 'neo'): ").strip()
+    if not piece_style:
+        piece_style = 'neo'
+
+    available_pieces = list_available_piece_styles()
+    if piece_style not in available_pieces:
+        fetch_choice = input(f"[GENERATE] Piece style '{piece_style}' not found locally. Fetch from online [Chess.com]? (y/n): ").strip().lower()
+        if fetch_choice == 'y':
+            success = get_pieces(piece_style)
+            if not success:
+                print(f"[GENERATE] Failed to fetch piece style '{piece_style}'. Using default 'neo'.")
+                piece_style = 'neo'
+                if piece_style not in available_pieces:
+                    get_pieces(piece_style, quiet=True)
+        else:
+            print(f"[GENERATE] Using default piece style 'neo'.")
+            piece_style = 'neo'
+
+    board_path = input("[GENERATE] Enter output board image path (default 'generated_board.png'): ").strip()
+    if not board_path:
+        board_path = "generated_board.png"
+    return single_board_generation(fen_string, board_path, use_invalid_fen=True, board_style=board_style, piece_style=piece_style)
 
 if __name__ == "__main__":
     raise NotImplementedError("This module is intended to be imported, not run directly.")

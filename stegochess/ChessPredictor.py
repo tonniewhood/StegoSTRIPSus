@@ -31,8 +31,8 @@ class ChessPiecePredictor:
         
         # Get class names from model
         self.class_names = self.model.names  # Dict: {0: 'bb', 1: 'bk', ...}
-        print(f"Loaded model: {model_path}")
-        print(f"Classes: {list(self.class_names.values())}\n")
+        print(f"[PREDICTOR] Loaded model: {model_path}")
+        print(f"[PREDICTOR] Classes: {list(self.class_names.values())}\n")
     
     def predict_square(self, image: Image.Image, 
                        return_confidence: bool = False) -> str | Tuple[str, float]:
@@ -102,7 +102,8 @@ class ChessPiecePredictor:
             return_confidence: If True, return confidence scores
             
         Returns:
-            8x8 nested list of predictions
+            If return_confidence=False: FEN string of predicted board state
+            If return_confidence=True: Tuple with (FEN string, average confidence, per-square confidences)
         """
         # Crop the board image into individual square images
         squares = []

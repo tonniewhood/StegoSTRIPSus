@@ -5,49 +5,15 @@ Combines YOLO detection with STRIPS planning for chess endgame analysis
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
+from typing import Dict, Tuple
+
+from PIL import Image
+from ultralytics import YOLO
 
 # Import our package modules
-from stegochess import detection, solver, board
-
-
-def detect_board(image_path: Path):
-    """
-    Run YOLO detection on chess board image
-    
-    Args:
-        image_path (Path): Path to the chess board image
-
-    Returns:
-        dict: Detected pieces and their positions
-    """
-    print(f"\n[DETECT] Running detection on image: {image_path}")
-
-    model_path = input("Enter YOLO model path (or press Enter for default 'defaults/best.pt'): ").strip()
-    try:
-        if not model_path:
-            model_path = Path("defaults/best.pt")
-        else:
-            model_path = Path(model_path)
-
-        if not model_path.exists():
-            print(f"[ERROR] Model file does not exist: {model_path}")
-            return
-    except Exception as e:
-        print(f"[ERROR] Invalid model path: {e}")
-        return
-
-    results = detection.detect_from_image(image_path, model_path)
-    fen = detection.detection_to_fen(results)
-    print(f"Detected FEN: {fen}")
-    return results
-
-
-def generate_board(fen_string):
-    """Generate board visualization from FEN string"""
-    print(f"\n[GENERATE] Generating board from FEN: {fen_string}")
-    board.print_board_ascii(fen_string)
-    board.generate_board_image(fen_string)
+from stegochess import board, model, solver, ChessPredictor
 
 
 def solve_fen(fen_string):
@@ -65,8 +31,8 @@ def solve_image(image_path):
     """Detect board from image and solve using STRIPS"""
     print(f"\n[SOLVE] Detecting and solving from image: {image_path}")
     # Run detection
-    results = detection.detect_from_image(image_path)
-    fen = detection.detection_to_fen(results)
+    results = model.detect_from_image(image_path)
+    fen = model.detection_to_fen(results)
     print(f"Detected FEN: {fen}")
 
     # Solve with STRIPS
@@ -104,12 +70,14 @@ def show_help():
     print("Chess Endgame Steganography Solver - Help")
     print("="*60)
     print("\nAvailable Commands:")
-    print("  1. detect      - Run YOLO detection on chess board image")
-    print("  2. generate    - Generate board visualization from FEN string")
-    print("  3. solve-fen   - Solve chess endgame from FEN string")
-    print("  4. solve-image - Detect board from image and solve endgame")
-    print("  5. solve-pred  - Solve a predefined endgame")
-    print("  6. list        - List all available predefined endgames")
+    print("  1. train-gen   - Generate training data for YOLO model")
+    print("  2. train       - Train YOLO model on generated data")
+    print("  3. detect      - Run YOLO detection on chess board image")
+    print("  4. generate    - Generate board visualization from FEN string")
+    print("  5. solve-fen   - Solve chess endgame from FEN string")
+    print("  6. solve-image - Detect board from image and solve endgame")
+    print("  7. solve-pred  - Solve a predefined endgame")
+    print("  8. list        - List all available predefined endgames")
     print("  h. help        - Show this help message")
     print("  q. quit        - Exit the program")
     print("\nExamples:")
@@ -123,12 +91,14 @@ def print_menu():
     print("\n" + "="*60)
     print("Chess Endgame Steganography Solver")
     print("="*60)
-    print("\n[1] Detect board from image")
-    print("[2] Generate board from FEN")
-    print("[3] Solve from FEN string")
-    print("[4] Solve from image")
-    print("[5] Solve predefined endgame")
-    print("[6] List predefined endgames")
+    print("\n[1] Generate training data")
+    print("[2] Train YOLO model")
+    print("[3] Detect board from image")
+    print("[4] Generate board from FEN")
+    print("[5] Solve from FEN string")
+    print("[6] Solve from image")
+    print("[7] Solve predefined endgame")
+    print("[8] List predefined endgames")
     print("[h] Help")
     print("[q] Quit")
     print("-"*60)
@@ -146,52 +116,51 @@ def main():
         print_menu()
         choice = input("\nEnter your choice: ").strip().lower()
 
-        if choice == '1' or choice == 'detect':
-            image_path = input("Enter image path: ").strip()
+        if choice == '1' or choice == 'train-gen':
+            if board.training_data_generation(sprite_dir=board.SPRITE_DIR, board_dir=board.BOARD_DIR):
+                print("\n[ERROR] Training data generation failed.")
+            else:
+                print("\n[TRAIN-GEN] Training data generation completed successfully.")
+        
+        elif choice == '2' or choice == 'train':
+            model.train_model()
+
+        elif choice == '3' or choice == 'detect':
+            image_path = input("[DETECT] Enter image path: ").strip()
             if image_path:
-                try:
-                    image_path_obj = Path(image_path)
-                    if not image_path_obj.exists():
-                        print(f"[ERROR] Image file does not exist: {image_path}")
-                        continue
-
-                    detect_board(image_path_obj)
-                except Exception as e:
-                    print(f"[ERROR] Invalid image path: {e}")
-                    continue
-
+                model.detect_board(image_path)
             else:
                 print("[ERROR] Image path cannot be empty")
 
-        elif choice == '2' or choice == 'generate':
-            fen = input("Enter FEN string: ").strip()
+        elif choice == '4' or choice == 'generate':
+            fen = input("[GENERATE] Enter FEN string: ").strip()
             if fen:
-                generate_board(fen)
+                board.generate_board(fen)
             else:
                 print("[ERROR] FEN string cannot be empty")
 
-        elif choice == '3' or choice == 'solve-fen':
+        elif choice == '5' or choice == 'solve-fen':
             fen = input("Enter FEN string: ").strip()
             if fen:
                 solve_fen(fen)
             else:
                 print("[ERROR] FEN string cannot be empty")
 
-        elif choice == '4' or choice == 'solve-image':
+        elif choice == '6' or choice == 'solve-image':
             image_path = input("Enter image path: ").strip()
             if image_path:
                 solve_image(image_path)
             else:
                 print("[ERROR] Image path cannot be empty")
 
-        elif choice == '5' or choice == 'solve-pred':
+        elif choice == '7' or choice == 'solve-pred':
             endgame_name = input("Enter predefined endgame name (PUSH/POP/ADD/SUB/JMP/JZ/LOAD/HALT): ").strip().upper()
             if endgame_name:
                 solve_predefined(endgame_name)
             else:
                 print("[ERROR] Endgame name cannot be empty")
 
-        elif choice == '6' or choice == 'list':
+        elif choice == '8' or choice == 'list':
             list_predefined()
 
         elif choice == 'h' or choice == 'help':
