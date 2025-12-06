@@ -81,18 +81,19 @@
 ;;;	ELSEIF the top of the stack is a possibilities list
 ;;;	THEN pop the first possibility and put it on the stack
 
-(defun strips (goal)
+(defun strips (goal &optional (silent-p nil))
   (setf *stack* (list (make-goal goal)))
   (loop (when (null *stack*) (return))
         (if *debug* (print-stack *stack*))
         (if (equal (read-char-no-hang) #\b) (break)) ; for debugging
         (cond ((goal-p (car *stack*))
-               (or (plan) (split-goals) (backtrack))) 	 
+               (or (plan) (split-goals) (backtrack silent-p))) 	 
               ((op-p (car *stack*))
-               (execute-op))
+               (execute-op silent-p))
               ((possibilities-listp (car *stack*))
                (try-next))))
-  (print-plan *ops*)
+  (if (not silent-p)
+      (print-plan *ops*))
   (prog1 (instantiate *ops*) (reset-planner))) 
 
 
@@ -123,7 +124,7 @@
 ;;; stack) until it gets to a possibilities list, i.e., the last choice 
 ;;; point.
 
-(defun backtrack ()
+(defun backtrack (&optional (silent-p nil))
   (loop
    (when (null *history*) (break))	; total failure
    (let ((event-note (pop *history*)))
@@ -133,7 +134,7 @@
            (return))                    ; normal exit
      (cond ((execute-event-note-p event-note)
             (push (pop *ops*) *stack*)	; retract a scheduled
-            (retract-operator event-note)) ; operator
+            (retract-operator event-note silent-p)) ; operator
            ((add-goal-event-note-p event-note)
             (setf *stack* (remove event-note *stack*)))
            ((remove-goal-event-note-p event-note) 		
@@ -205,9 +206,10 @@
 ;    (push op *ops*)
 ;    (push (execute-event-note op) *history*)))
 
-(defun execute-op ()
+(defun execute-op (&optional (silent-p nil))
   (let ((op (pop *stack*)))
-    (format t "~%APPLYING operator => ~A~%" (instantiate (op-action op))) 
+    (if (not silent-p)
+      (format t "~%APPLYING operator => ~A~%" (instantiate (op-action op)))) 
     (for (delete :in (instantiate (op-delete op))) 	 
          :do (let ((binds (retract delete)))
                (for (bind :in binds)

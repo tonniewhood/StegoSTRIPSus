@@ -86,7 +86,7 @@
 (store '(IN-FILE wp1 {{ PIECE1_FILE }}))
 (store '(IN-RANK wp1 {{ PIECE1_RANK }}))
 
-[[
+[[ --TWO_PIECE
 ;; White piece 2 spatial position
 (store '(AT wp2 {{ PIECE2_FILE }} {{ PIECE2_RANK }}))
 (store '(IN-FILE wp2 {{ PIECE2_FILE }}))
@@ -118,7 +118,7 @@
 (store '(INST 7 rank))
 (store '(INST 8 rank))
 
-[[
+[[ --QUEEN
 (store '(INST LD1 l-diagonal))
 (store '(INST LD2 l-diagonal))
 (store '(INST LD3 l-diagonal))

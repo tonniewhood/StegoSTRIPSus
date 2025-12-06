@@ -140,28 +140,28 @@ def main():
                 print("[ERROR] FEN string cannot be empty")
 
         elif choice == '5' or choice == 'solve-fen':
-            fen = input("Enter FEN string: ").strip()
+            fen = input("[SOLVE] Enter FEN string: ").strip()
             if fen:
-                solve_fen(fen)
+                _ = solver.solve_from_fen(fen)
             else:
                 print("[ERROR] FEN string cannot be empty")
 
         elif choice == '6' or choice == 'solve-image':
             image_path = input("Enter image path: ").strip()
             if image_path:
-                solve_image(image_path)
+                _ = solver.solve_from_image(image_path)
             else:
                 print("[ERROR] Image path cannot be empty")
 
         elif choice == '7' or choice == 'solve-pred':
-            endgame_name = input("Enter predefined endgame name (PUSH/POP/ADD/SUB/JMP/JZ/LOAD/HALT): ").strip().upper()
-            if endgame_name:
-                solve_predefined(endgame_name)
+            endgame = input("Enter predefined endgame name or ID: ").strip()
+            if endgame:
+                solver.solve_predefined(endgame)
             else:
                 print("[ERROR] Endgame name cannot be empty")
 
         elif choice == '8' or choice == 'list':
-            list_predefined()
+            solver.list_predefined_endgames()
 
         elif choice == 'h' or choice == 'help':
             show_help()

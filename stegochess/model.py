@@ -182,7 +182,7 @@ def start_training(model: YOLO, dataset: str, epochs: int, img_size: int,
     
     return results
 
-def detect_board(image_path_str: str) -> int:
+def detect_board(image_path_str: str) -> str | None:
     """
     Run YOLO detection on chess board image
     
@@ -190,17 +190,17 @@ def detect_board(image_path_str: str) -> int:
         image_path_str (str): Path to the chess board image
 
     Returns:
-        int: 0 on success, 1 on failure
+        str | None: Predicted FEN string or None on failure
     """
     try:
         image_path_obj = Path(image_path_str)
         if not image_path_obj.exists():
             print(f"[ERROR] Image file does not exist: {image_path_str}")
-            return 1
+            return None
 
     except Exception as e:
         print(f"[ERROR] Invalid image path: {e}")
-        return 1
+        return None
 
     print(f"\n[DETECT] Running detection on image: {image_path_str}")
 
@@ -213,10 +213,10 @@ def detect_board(image_path_str: str) -> int:
 
         if not model_path.exists():
             print(f"[ERROR] Model file does not exist: {model_path}")
-            return
+            return None
     except Exception as e:
         print(f"[ERROR] Invalid model path: {e}")
-        return
+        return None
 
     image = Image.open(image_path_obj).convert("RGB")
     predictor = ChessPredictor.ChessPiecePredictor(model_path=model_path, device=0, confidence_threshold=0.5)
@@ -233,3 +233,5 @@ def detect_board(image_path_str: str) -> int:
                 confidence = square_confidences.get(f"{chr(ord('a') + file - 1)}{rank}", 0.0)
                 row_confidences.append(f"{confidence:.2f}")
             print(f"[DETECT] {rank} ", " ".join(row_confidences))
+
+    return predicted_fen

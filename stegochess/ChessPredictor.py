@@ -135,7 +135,7 @@ class ChessPiecePredictor:
                 fen_row += str(empty_count)
             fen_rows.append(fen_row)
 
-        fen_string = "/".join(fen_rows) + " w KQkq - 0 1"  # Simplified FEN suffix
+        fen_string = "/".join(fen_rows) + " w - - 0 1"  # Simplified FEN suffix
         if return_confidence:
             cols = ["a", "b", "c", "d", "e", "f", "g", "h"]
             per_square_confidences = {f"{cols[i % 8]}{j}": conf for i, (_, conf) in enumerate(predictions) for j in range(1, 9)}

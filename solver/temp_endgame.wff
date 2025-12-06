@@ -1,0 +1,118 @@
+
+;; ================================================================
+;; module: endgame.wff
+;; description: STRIPS wffs for the chess endgame problem
+
+;; ----------------------------------------------------------------
+
+;; Conceptualization:
+
+;; 1) Objects: bk, wk, wp1, wp2, king, queen, rook
+;; 2) Functions: None
+;; 3) Relations: AT, TYPE, COLOR, ADJACENT-FILE, ADJACENT-RANK
+
+;; -----------------------------------------------------------------
+
+;; FOPC formalization of Conceptualization:
+
+;; Constants:
+
+;;   bk - black king
+;;   wk - white king
+;;   wp1 - white piece 1 (e.g., queen, rook)
+;;   wp2 - white piece 2 (e.g., queen, rook)
+
+
+;; --------------------------------------------------------------
+;; FOPC WFF        |  Interpretation
+;; ---------------------------------------------------------------
+;; -- Object type declarations:
+;; (TYPE bk king)             | The black king is of type king.
+;; (COLOR bk black)           | The black king is black.
+;; (TYPE wk king)             | The white king is of type king.
+;; (COLOR wk white)           | The white king is white.
+;; (TYPE wp1 queen OR rook)   | The white piece 1 is of type queen or rook.
+;; (COLOR wp1 white)          | The white piece 1 is white.
+;; (TYPE wp2 queen OR rook)   | The white piece 2 is of type queen or rook.
+;; (COLOR wp2 white)          | The white piece 2 is white.
+;;
+;; -- Spatial indicators:
+;; (AT bk G 8)                | The black king is on space G8.
+;; (AT wk G 6)                | The white king is on space G6.
+;; (AT wp1 F 6)               | The white piece 1 is on space F6.
+;; (AT wp2 F 7)               | The white piece 2 is on space F7.
+;; ================================================================
+
+;; ---------------------------------------------------------------
+;; Notes on the `{{ }}` syntax:
+;;   * The `{{ }}` syntax is used as a placeholder for variable substitution.
+;;   * In this file, `{{ PIECE_TYPE }}`, `{{ FILE }}`, and `{{ RANK }}` will be replaced with specific values during problem instantiation.
+;;
+;; Notes on the '[[ ]]' syntax:
+;;   * The `[[ ]]` syntax is used as a placeholder for optional inclusion.
+;;   * This allows for things like including or excluding a second white piece or the diagonal relations based on the specific endgame scenario.
+;;   * Content within the `[[ ]]` will be separated by new lines for clarity. The entire string will be matched against during problem instantiation.
+;; ---------------------------------------------------------------
+
+(in-package :user)
+(reset-db)
+
+;; Object type declarations
+(store '(TYPE bk king))
+(store '(TYPE wk king))
+(store '(TYPE wp1 rook))
+(store '(TYPE wp2 rook))
+
+;; Color declarations
+(store '(COLOR bk black))
+(store '(COLOR wk white))
+(store '(COLOR wp1 white))
+(store '(COLOR wp2 white))
+
+;; Spatial indicators
+;; ==========================================
+;; Black king spatial position
+(store '(AT bk B 8))
+(store '(IN-FILE bk B))
+(store '(IN-RANK bk 8))
+
+;; White king spatial position
+(store '(AT wk A 6))
+(store '(IN-FILE wk A))
+(store '(IN-RANK wk 6))
+
+;; White piece 1 spatial position
+(store '(AT wp1 C 6))
+(store '(IN-FILE wp1 C))
+(store '(IN-RANK wp1 6))
+
+;; White piece 2 spatial position
+(store '(AT wp2 C 1))
+(store '(IN-FILE wp2 C))
+(store '(IN-RANK wp2 1))
+
+;; Piece instances
+(store '(INST bk piece))
+(store '(INST wk piece))
+(store '(INST wp1 piece))
+(store '(INST wp2 piece))
+
+;; Space instances (for movement)
+(store '(INST A file))
+(store '(INST B file))
+(store '(INST C file))
+(store '(INST D file))
+(store '(INST E file))
+(store '(INST F file))
+(store '(INST G file))
+(store '(INST H file))
+    
+(store '(INST 1 rank))
+(store '(INST 2 rank))
+(store '(INST 3 rank))
+(store '(INST 4 rank))
+(store '(INST 5 rank))
+(store '(INST 6 rank))
+(store '(INST 7 rank))
+(store '(INST 8 rank))
+
