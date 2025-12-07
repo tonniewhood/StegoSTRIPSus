@@ -109,22 +109,24 @@ fi
 print_header "Setting Up Python Environment"
 
 # Ask about virtual environment
-read -p "Create a virtual environment? [y/N]: " -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if [ ! -d "venv" ]; then
+if [ ! -d "venv" ]; then
+    read -p "Create a virtual environment? [y/N]: " -n 1 -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_info "Creating virtual environment..."
         $PYTHON_CMD -m venv venv
         print_success "Virtual environment created"
     else
-        print_info "Virtual environment already exists"
+        print_warning "Skipping virtual environment creation"
     fi
-
-    print_info "Activating virtual environment..."
-    source venv/bin/activate
-    print_success "Virtual environment activated"
-    PIP_CMD="pip"
+else
+    print_info "Virtual environment found"
 fi
+
+print_info "Activating virtual environment..."
+source venv/bin/activate
+print_success "Virtual environment activated"
+PIP_CMD="pip"
 
 # Install package in editable mode
 print_info "Installing stegochess package in editable mode (This may take awhile, ultralytics is considered 'un-small')..."
