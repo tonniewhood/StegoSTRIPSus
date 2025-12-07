@@ -83,7 +83,7 @@ elif command -v ccl &> /dev/null; then
 else
     print_warning "No Common Lisp implementation found (CLISP, SBCL, or CCL)"
     print_info "Install one with: sudo apt install clisp (or brew install clisp on macOS)"
-    read -p "Continue without Lisp? (STRIPS solver will not work) [y/N]: " -n 1 -r
+    read -p "Continue without Lisp? (STRIPS solver will not work) [y/N]: " -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         exit 1
@@ -111,7 +111,7 @@ print_header "Setting Up Python Environment"
 # Ask about virtual environment
 echo
 if [ ! -d "venv" ]; then
-    read -p "Create a virtual environment? [y/N]: " -n 1 -r
+    read -p "Create a virtual environment? [y/N]: " -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_info "Creating virtual environment..."
         $PYTHON_CMD -m venv venv
@@ -182,7 +182,7 @@ else
 fi
 
 # Ask about additional styles
-read -p "Download additional board/piece styles? [y/N]: " -n 1 -r
+read -p "Download additional board/piece styles? [y/N]: " -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     print_info "Available piece styles: neo, wood, metal, alpha, bases, book, 8_bit, etc."
@@ -227,7 +227,7 @@ else
     print_info "  1. Train the model now (requires assets and takes time)"
     print_info "  2. Train later using the CLI menu option"
     echo ""
-    read -p "Train YOLO model now? [y/N]: " -n 1 -r
+    read -p "Train YOLO model now? [y/N]: " -r
     echo
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -240,7 +240,7 @@ else
 
             print_info "Training YOLO model (this may take a while)..."
             print_info "Training with: epochs=35, imgsz=160, batch=32"
-            $PYTHON_CMD -c "from stegochess.model import train_model; train_model(epochs=35, imgsz=160, batch=32)"
+            $PYTHON_CMD -c "from stegochess.model import cli_train_model; cli_train_model(epochs=35, img_size=160, batch_size=32)"
 
             if [ $? -eq 0 ]; then
                 print_success "YOLO model trained successfully"
