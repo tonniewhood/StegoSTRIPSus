@@ -71,3 +71,14 @@ runs/
 
 # Claude AI files
 .plan/
+
+# Archive files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+
+# Project report file
+cs5600_6600_F25_project2_report.pdf
