@@ -195,7 +195,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     done
 
     print_info "Downloading extended board styles..."
-    EXTENDED_BOARDS=("classic" "stone" "tournament")
+    EXTENDED_BOARDS=("walnut" "stone" "tournament")
     for style in "${EXTENDED_BOARDS[@]}"; do
         print_info "Downloading board style: $style"
         $PYTHON_CMD -c "from stegochess.board import get_boards; get_boards('$style')" 2>/dev/null && \
