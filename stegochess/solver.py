@@ -4,9 +4,11 @@ solver.py - STRIPS solver interface
 
 import subprocess
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
-from stegochess import model
+import chess
+
+from stegochess import board, model
 
 
 TEMPLATE_WFF_PATH = Path("solver/endgame_template.wff")
@@ -36,6 +38,8 @@ PREDEFINED_ENDGAMES = [
     "Pim",
     "Tonniewhood"
 ]
+
+PIECE_MOVE = Tuple[str, str, str] # (piece_type, from_square, to_square)
 
 
 def eval_conditionals(template: str, conditions: Tuple[str, ... ]) -> str:
@@ -175,6 +179,38 @@ def solve_from_image(image_path: str) -> None:
     solve_from_fen(predicted_fen)
 
 
+def calculate_plan_moves(plan: List[str]) -> List[PIECE_MOVE]:
+    """
+    Calculate the FEN strings for each step in the plan
+
+    Args:
+        plan: List of plan steps from the solver
+    
+    Returns:
+        List of piece moves as (piece_type, from_square, to_square)
+    """
+
+    moves = []
+    for step in plan:
+        parts = step[1:-1].split() # Remove parentheses and split
+        operator = parts[0]
+        if "MOVE-" in operator:
+            _, piece_type, direction = operator.split('-')
+            if direction == "HORIZONTAL":
+                from_square = f"{parts[2].lower()}{parts[4]}"
+                to_square = f"{parts[3].lower()}{parts[4]}"
+            elif direction == "VERTICAL":
+                from_square = f"{parts[2].lower()}{parts[3]}"
+                to_square = f"{parts[2].lower()}{parts[4]}"
+            elif direction == "DIAGONAL":
+                from_square = f"{parts[2].lower()}{parts[3]}"
+                to_square = f"{parts[4].lower()}{parts[5]}"
+            moves.append((piece_type[0].upper(), from_square, to_square))
+        elif "UNCHECK-BLACK-KING" in operator:
+            moves.append(("K", "b8", "a8"))
+
+    return moves
+
 def solve_predefined(endgame_name):
     """
     Solve a predefined endgame
@@ -182,7 +218,6 @@ def solve_predefined(endgame_name):
     Args:
         endgame_name: Name of the predefined endgame (PUSH, POP, etc.)
     """
-    print(f"[SOLVER] Solving predefined: {endgame_name}")
     if endgame_name not in PREDEFINED_ENDGAMES and not endgame_name.isdigit():
         print("[ERROR] Invalid predefined endgame name or ID.")
         return
@@ -192,7 +227,18 @@ def solve_predefined(endgame_name):
     else:
         endgame_number = PREDEFINED_ENDGAMES.index(endgame_name) + 1
 
-    call_strips_solver(f"solver/predefined/endgame{endgame_number}.wff")
+    print(f"[SOLVER] Using endgame ID: {endgame_number} (Name: {PREDEFINED_ENDGAMES[endgame_number-1]})")
+    response = input("[SOLVER] View board ASCII? (y/n): ").strip().lower()
+    if response == 'y':
+        board.print_board_ascii(VALID_FENS[endgame_number - 1])
+
+    plan = call_strips_solver(f"solver/predefined/endgame{endgame_number}.wff")
+
+    animate_choice = input("[SOLVER] Animate solution? (y/n): ").strip().lower()
+    if animate_choice == 'y':
+        game_board = chess.Board(VALID_FENS[endgame_number - 1])
+        moves = calculate_plan_moves(plan)
+        board.animate_from_fen(f"Endgame{endgame_number}_solution.gif", game_board, moves, delay=1.0, smooth_movement=True, loop=True, final_frame_hold=2.0)
 
 
 def list_predefined_endgames():
@@ -205,12 +251,15 @@ def list_predefined_endgames():
         print(f"  - {endgame:<11} ({idx+1}) => FEN: {VALID_FENS[idx]}")
 
 
-def call_strips_solver(endgame_wff_path: str) -> None:
+def call_strips_solver(endgame_wff_path: str) -> List[str]:
     """
     Call the Lisp STRIPS solver
     
     Args:
         endgame_wff_path: Path to the WFF file for the endgame
+
+    Returns:
+        List[str]: The output plan from the solver
     """
     cmd = SOLVER_CMD + [str(endgame_wff_path)]
     ret_status = subprocess.run(cmd, capture_output=True, text=True)
@@ -236,3 +285,5 @@ def call_strips_solver(endgame_wff_path: str) -> None:
             print(f"  - {step}")
     else:
         print("No solution found")
+
+    return plan

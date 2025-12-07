@@ -46,11 +46,13 @@ weights/
 *.so
 
 # Asset directory contents
-assets/
+assets/*
+!assets/checkmate_gradient.png
 asset/
 boardData/
 pieceData/
 datasets/
+output/
 
 # Scratch files
 Scratch/

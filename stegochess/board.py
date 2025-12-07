@@ -6,10 +6,10 @@ import os
 import random
 import requests
 import shutil
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import chess
-from PIL import Image
+from PIL import Image, ImageChops
 
 CHESS_THEME_URL = "https://www.chess.com/chess-themes/"
 PIECE_BASE_URL = CHESS_THEME_URL + "pieces/{}/{}/{}{}.png"
@@ -44,6 +44,10 @@ BOARD_WIDTH = 1200
 BOARD_HEIGHT = 1200
 SQUARE_SIZE = BOARD_WIDTH // 8
 
+MOVEMENT_FRAMES = 10 # Number of frames for piece movement animation
+PIECE_MOVE = Tuple[str, str, str] # (piece_type, from_square, to_square)
+CHECKMATE_GRADIENT_PATH = ASSET_PATH + "checkmate_gradient.png"
+
 def valid_board(board: chess.Board) -> bool:   
     """
     Check if the given chess board is invalid based on its status.
@@ -75,7 +79,6 @@ def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Colo
         board_image (Image.Image): The base image of the chess board.
         piece_images (List[Image.Image]): List of piece images indexed by color and piece type.
         fen (str): The FEN string representing the chess position.
-        output_path (str): The path to save the generated image.
         use_invalid_fen (bool): If True, use an invalid FEN for testing purposes.
 
     Returns:
@@ -109,6 +112,32 @@ def generate_board_image(board_image: Image.Image, piece_images: Dict[chess.Colo
 
     return board_state_img
 
+def create_board_and_piece_images(board_style: str, piece_style: str) -> Tuple[Image.Image, Dict[chess.Color, Dict[chess.PieceType, Image.Image]]]:
+    """
+    Create board and piece images based on the specified styles.
+
+    Args:
+        board_style (str): The style of the chess board to use.
+        piece_style (str): The style of the chess pieces to use.
+
+    Returns:
+        Tuple[Image.Image, Dict[chess.Color, Dict[chess.PieceType, Image.Image]]]: The board image and piece images.
+    """
+    # Load board image
+    board_image = Image.open(BOARD_FILE.format(board_style)).convert("RGBA")
+
+    # Load piece images
+    piece_images = {
+        chess.WHITE: {},
+        chess.BLACK: {}
+    }
+    for color in [chess.WHITE, chess.BLACK]:
+        for piece_type in chess.PIECE_TYPES:
+            piece_file = SPRITE_DIR + PIECE_IMAGES[color][piece_type].format(piece_style)
+            piece_img = Image.open(piece_file).convert("RGBA")
+            piece_images[color][piece_type] = piece_img
+
+    return board_image, piece_images
 
 def single_board_generation(fen: str, output_path: str, use_invalid_fen: bool = False, board_style: str = "green", piece_style: str = "neo") -> int:
     """
@@ -126,26 +155,21 @@ def single_board_generation(fen: str, output_path: str, use_invalid_fen: bool = 
     """
     if not fen or not output_path:
         raise ValueError("FEN string and output path must be provided.")
+
+    if not os.path.exists(os.path.join("output")):
+        print("[WARNING] Output directory does not exist. The project may not be setup properly. Ensure you've run `setup.sh`, Creating now.")
+        os.makedirs(os.path.join("output"))
     
     # Load images
-    board_image = Image.open(BOARD_FILE.format(board_style)).convert("RGBA")
-    piece_images = {
-        chess.WHITE: {},
-        chess.BLACK: {}
-    }
-    for color in [chess.WHITE, chess.BLACK]:
-        for piece_type in chess.PIECE_TYPES:
-            piece_file = SPRITE_DIR + PIECE_IMAGES[color][piece_type].format(piece_style)
-            piece_img = Image.open(piece_file).convert("RGBA")
-            piece_images[color][piece_type] = piece_img
+    board_image, piece_images = create_board_and_piece_images(board_style, piece_style)
 
     # Generate the board image
     try:
         board_state_img = generate_board_image(board_image, piece_images, fen, use_invalid_fen)
         if board_state_img is None:
             return 1
-        board_state_img.save(output_path)
-        print(f"[GENERATE] Board image saved to {output_path}")
+        board_state_img.save(os.path.join("output", output_path))
+        print(f"[GENERATE] Board image saved to {os.path.join('output', output_path)}")
     except ValueError as e:
         print(e)
         return 2
@@ -169,16 +193,7 @@ def multi_board_generation(fen_list_file: str, output_dir: str, use_invalid_fen:
         return 4
 
     # Load images
-    board_image = Image.open(BOARD_FILE.format(board_style)).convert("RGBA")
-    piece_images = {
-        chess.WHITE: {},
-        chess.BLACK: {}
-    }
-    for color in [chess.WHITE, chess.BLACK]:
-        for piece_type in chess.PIECE_TYPES:
-            piece_file = ASSET_PATH + PIECE_IMAGES[color][piece_type].format(piece_style)
-            piece_img = Image.open(piece_file).convert("RGBA")
-            piece_images[color][piece_type] = piece_img
+    board_image, piece_images = create_board_and_piece_images(board_style, piece_style)
 
     with open(fen_list_file, 'r') as f:
         idx = 0
@@ -188,8 +203,8 @@ def multi_board_generation(fen_list_file: str, output_dir: str, use_invalid_fen:
             if board_state_img is None:
                 print(f"Failed to generate board for FEN: {fen}")
                 return 1
-            board_state_img.save(output_path)
-            print(f"Board image saved to {output_path}")
+            board_state_img.save(os.path.join('output', output_path))
+            print(f"Board image saved to {os.path.join('output', output_path)}")
             idx += 1
 
     return 0
@@ -488,6 +503,74 @@ def generate_board(fen_string: str) -> None:
     if not board_path:
         board_path = "generated_board.png"
     return single_board_generation(fen_string, board_path, use_invalid_fen=True, board_style=board_style, piece_style=piece_style)
+
+def animate_from_fen(output_filename: str, game_board: chess.Board, moves: List[PIECE_MOVE], delay: float = 1.0, smooth_movement: bool = False, loop: bool = False, final_frame_hold: float = 2.0) -> None:
+    """
+    Animate a sequence of chess board states from FEN strings.
+
+    Args:
+        output_filename (str): Path to save the output animation.
+        board_states (Tuple[str, ...]): Tuple of FEN strings representing board states.
+        delay (float): Delay between frames in seconds.
+        smooth_movement (bool): Whether to animate smooth piece movement.
+        loop (bool): Whether to loop the animation.
+        final_frame_hold (float): Hold time for the final frame in seconds.
+    """
+
+    board_style = input("[ANIMATE] Enter board style (default 'green'): ").strip().lower()
+    if not board_style:
+        board_style = 'green'
+    elif board_style not in list_available_board_styles():
+        print(f"[ANIMATE] Board style '{board_style}' not found locally. Using default 'green'.")
+        board_style = 'green'
+
+    piece_style = input("[ANIMATE] Enter piece style (default 'neo'): ").strip().lower()
+    if not piece_style:
+        piece_style = 'neo'
+    elif piece_style not in list_available_piece_styles():
+        print(f"[ANIMATE] Piece style '{piece_style}' not found locally. Using default 'neo'.")
+        piece_style = 'neo'
+
+    board_image, piece_images = create_board_and_piece_images(board_style, piece_style)
+    checkmate_img = Image.open(CHECKMATE_GRADIENT_PATH).convert("RGBA").resize((SQUARE_SIZE, SQUARE_SIZE))
+    frames = [generate_board_image(board_image, piece_images, game_board.fen(), use_invalid_fen=True)]
+    for move in moves:
+        # Convert move tuple (piece_type, from_square, to_square) to UCI format (from_square + to_square)
+        print(move)
+        uci_move = f"{move[1].lower()}{move[2].lower()}"
+        print(f"[ANIMATE] Applying move: {uci_move}")
+        game_board.push_uci(uci_move)
+        frame = generate_board_image(board_image, piece_images, game_board.fen(), use_invalid_fen=True)
+        if frame is None:
+            print(f"[ANIMATE] Failed to generate board for FEN: {game_board.fen()}")
+            return
+        if smooth_movement:
+            print("[ANIMATE] Smooth movement not yet implemented.")
+        frames.append(frame)
+
+    king_pos = game_board.king(chess.BLACK)
+    king_x, king_y = king_pos % 8, 7 - (king_pos // 8)
+    king_alpha = piece_images[chess.BLACK][chess.KING].split()[-1]
+    inverted_mask = ImageChops.invert(king_alpha)
+    checkmate_img.putalpha(ImageChops.multiply(checkmate_img.split()[3], inverted_mask))
+    frames[-1].paste(
+        checkmate_img,
+        (king_x * SQUARE_SIZE, king_y * SQUARE_SIZE),
+        checkmate_img,
+    )
+
+    print("Frames: ", len(frames))
+    print("Moves: ", moves)
+
+    # Save as GIF
+    frames[0].save(
+        os.path.join("output", output_filename),
+        save_all=True,
+        append_images=frames[1:],
+        duration=[int(delay * 1000)] * (len(frames) - 1) + [int(final_frame_hold * 1000)],
+        loop=0 if loop else 1,
+        optimize=True
+    )
 
 if __name__ == "__main__":
     raise NotImplementedError("This module is intended to be imported, not run directly.")

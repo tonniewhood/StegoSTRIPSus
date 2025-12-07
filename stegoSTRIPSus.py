@@ -100,7 +100,7 @@ def main():
                 print("[ERROR] Image path cannot be empty")
 
         elif choice == '7' or choice == 'solve-pred':
-            endgame = input("Enter predefined endgame name or ID: ").strip()
+            endgame = input("[SOLVER] Enter predefined endgame name or ID: ").strip()
             if endgame:
                 solver.solve_predefined(endgame)
             else:
