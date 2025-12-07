@@ -110,6 +110,8 @@ Launch the interactive interface:
 python stegoSTRIPSus.py
 ```
 
+> The setup script creates a virtual environment. Make sure to source that before running if you don't have a local instalation.
+
 ### Menu Options
 
 **[1] Generate training data**
