@@ -5,63 +5,9 @@ Combines YOLO detection with STRIPS planning for chess endgame analysis
 """
 
 import sys
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Tuple
-
-from PIL import Image
-from ultralytics import YOLO
 
 # Import our package modules
-from stegochess import board, model, solver, ChessPredictor
-
-
-def solve_fen(fen_string):
-    """Solve chess endgame from FEN string using STRIPS"""
-    print(f"\n[SOLVE] Solving endgame from FEN: {fen_string}")
-    solution = solver.solve_from_fen(fen_string)
-    if solution:
-        print(f"Solution found: {solution}")
-    else:
-        print("No solution found")
-    return solution
-
-
-def solve_image(image_path):
-    """Detect board from image and solve using STRIPS"""
-    print(f"\n[SOLVE] Detecting and solving from image: {image_path}")
-    # Run detection
-    results = model.detect_from_image(image_path)
-    fen = model.detection_to_fen(results)
-    print(f"Detected FEN: {fen}")
-
-    # Solve with STRIPS
-    solution = solver.solve_from_fen(fen)
-    if solution:
-        print(f"Solution found: {solution}")
-    else:
-        print("No solution found")
-    return solution
-
-
-def solve_predefined(endgame_name):
-    """Solve a predefined endgame from solver/predefined/"""
-    print(f"\n[SOLVE] Running predefined endgame: {endgame_name}")
-    solution = solver.solve_predefined(endgame_name)
-    if solution:
-        print(f"Solution found: {solution}")
-    else:
-        print("No solution found")
-    return solution
-
-
-def list_predefined():
-    """List all available predefined endgames"""
-    print("\n[LIST] Available predefined endgames:")
-    endgames = solver.list_predefined_endgames()
-    for endgame in endgames:
-        print(f"  - {endgame}")
-    return endgames
+from stegochess import board, model, solver
 
 
 def show_help():

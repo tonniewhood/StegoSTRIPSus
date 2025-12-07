@@ -66,3 +66,6 @@ tablebases/
 
 # Logs and results
 runs/
+
+# Claude AI files
+.plan/
