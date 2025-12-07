@@ -143,6 +143,30 @@ python stegoSTRIPSus.py
 **[8] List predefined endgames**
 - Shows available endgame positions
 
+### Useful Tools
+
+#### Bern's Random-FEN-Generator
+
+I've found that sometimes it can be nice to generate chess FENs on the fly. I found this tool called [Bern's Random-FEN-Generator](http://bernd.bplaced.net/fengenerator/fengenerator.html). It generates a random chess board, and can do a pretty good job of verifying that the board generation works, and that the model can detect off a random image.
+
+#### Lichess
+
+I've found Lichess to be much easier to navigate than Chess.com as far as just inputting a FEN string and seeing the chess boad. Just go to [Tools > Board editor](https://lichess.org/editor/) and input the FEN below the board.
+
+### Important note about board imges
+
+In my rather infinite wisdom, my square detection is based on parsing the board literally into several squares. This means that the input board needs to be a certain size to actually work, and the bounds of the image need to be the chess board, and the image needs to be 1200x1200. I've found that using FFmpeg is the easiest solution. Just using the following command allows you to resize an image and then use it pretty easily.
+
+```bash
+ffmpeg -i input.png -vf scale=1200:1200:force_original_aspect_ratio=disable output.png
+```
+
+Another more lightweight option is to use ImageMagick
+
+```bash
+convert input.png -resize 1200x1200! output.png
+```
+
 ---
 
 ## Project Structure
@@ -337,5 +361,6 @@ This project is for educational purposes as part of CS 5600.
 - **Chess Assets**: Board and piece images from [Chess.com](https://www.chess.com/chess-themes/)
 - **YOLO**: Using [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics)
 - **Python Chess**: Using [python-chess](https://python-chess.readthedocs.io/)
+- **Bernd Will**: Using his [Random-FEN-Generator](http://bernd.bplaced.net/fengenerator/fengenerator.html)
 
 ---

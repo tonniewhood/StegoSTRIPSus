@@ -181,11 +181,34 @@ else
     print_warning "Failed to download board style. You can download manually later."
 fi
 
-# Ask about additional styles
-read -p "Download additional board/piece styles? [y/N]: " -r
+# Ask about extended asset download
+read -p "Download extended asset pack? (5 piece styles + 3 board styles) [y/n]: " -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    print_info "Available piece styles: neo, wood, metal, alpha, bases, book, 8_bit, etc."
+    print_info "Downloading extended piece styles..."
+    EXTENDED_PIECES=("glass" "gothic" "ocean" "marble" "luca")
+    for style in "${EXTENDED_PIECES[@]}"; do
+        print_info "Downloading piece style: $style"
+        $PYTHON_CMD -c "from stegochess.board import get_pieces; get_pieces('$style')" 2>/dev/null && \
+            print_success "Downloaded $style" || \
+            print_warning "Failed to download $style"
+    done
+
+    print_info "Downloading extended board styles..."
+    EXTENDED_BOARDS=("classic" "stone" "tournament")
+    for style in "${EXTENDED_BOARDS[@]}"; do
+        print_info "Downloading board style: $style"
+        $PYTHON_CMD -c "from stegochess.board import get_boards; get_boards('$style')" 2>/dev/null && \
+            print_success "Downloaded $style" || \
+            print_warning "Failed to download $style"
+    done
+fi
+
+# Ask about additional custom styles
+read -p "Download additional custom board/piece styles? [y/n]: " -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    print_info "Available piece styles: neo, wood, metal, alpha, bases, book, 8_bit, icy_sea, etc."
     read -p "Enter piece style names (comma-separated, or press Enter to skip): " PIECE_STYLES
     if [ ! -z "$PIECE_STYLES" ]; then
         IFS=',' read -ra STYLES <<< "$PIECE_STYLES"
@@ -198,7 +221,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         done
     fi
 
-    print_info "Available board styles: green, brown, blue, gray, purple, etc."
+    print_info "Available board styles: green, brown, blue, gray, purple, tan, etc."
     read -p "Enter board style names (comma-separated, or press Enter to skip): " BOARD_STYLES
     if [ ! -z "$BOARD_STYLES" ]; then
         IFS=',' read -ra STYLES <<< "$BOARD_STYLES"
