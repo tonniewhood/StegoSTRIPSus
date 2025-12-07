@@ -67,7 +67,7 @@ def train_model() -> None:
     project_root = Path(".") # Current directory. We'll let things fail if we're not in the right place
     yolo_model, model_type = load_model()
     
-    # Update the path attribute in data.yaml to absolute path and save to a temp file
+    # Update the path attribute in data.yaml to absolute path
     dataset_path = update_dataset_config()
     if dataset_path is None:
         print("[ERROR] Dataset configuration failed. Cannot proceed with training.")
@@ -116,6 +116,49 @@ def train_model() -> None:
         if best_model_path.exists():
             best_model_path.replace(default_best_model_path)
             print(f"[TRAIN] Updated best model at {default_best_model_path}")
+        else:
+            print(f"[ERROR] Best model not found at {best_model_path}")
+
+def cli_train_model(epochs: int = 35, img_size: int = 160, batch_size: int = 32,
+                device: int = 0, train_config: str = "defaults/train.yaml", update_best: bool = True) -> None:
+    """
+    Train YOLO model on generated training data with CLI parameters
+    
+    Args:
+        epochs: Number of training epochs
+        img_size: Image size for training
+        batch_size: Batch size for training
+        device: Device ID for training
+        train_config: Path to training configuration file
+        update_best: If True, update the default best model after training
+    """
+
+    # Set up project structure
+    project_root = Path(".") # Current directory. We'll let things fail if we're not in the right place
+    yolo_model, model_type = load_model()
+    
+    # Update the path attribute in data.yaml to absolute path
+    dataset_path = update_dataset_config()
+    if dataset_path is None:
+        print("[ERROR] Dataset configuration failed. Cannot proceed with training.")
+        return
+    
+    # Generate run name
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_name = f"{model_type}_{timestamp}"
+
+    try:
+        start_training(yolo_model, dataset_path, epochs, img_size,
+                    device, batch_size, project_root, run_name, train_config)
+    except Exception as e:
+        print(f"[ERROR] Training failed: {e}")
+        return
+    
+    if update_best:
+        best_model_path = project_root / "runs" / run_name / "weights" / "best.pt"
+        default_best_model_path = project_root / "defaults" / "best.pt"
+        if best_model_path.exists():
+            best_model_path.replace(default_best_model_path)
         else:
             print(f"[ERROR] Best model not found at {best_model_path}")
 

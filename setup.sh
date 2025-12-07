@@ -127,7 +127,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Install package in editable mode
-print_info "Installing stegochess package in editable mode..."
+print_info "Installing stegochess package in editable mode (This may take awhile, ultralytics is considered 'un-small')..."
 $PIP_CMD install -e . --quiet
 print_success "Package installed"
 
